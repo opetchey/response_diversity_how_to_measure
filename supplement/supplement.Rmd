@@ -1,0 +1,202 @@
+---
+title: Supplementary information to report "How to measure response diversity"
+author: "Samuel R.P-J. Ross1, Owen L. Petchey, Takehiro Sasaki, David Armitage"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  bookdown::html_document2:
+    toc: true
+    toc_float:
+      collapsed: true
+      smooth_scroll: true
+---
+
+```{r include = FALSE, echo = FALSE}
+knitr::opts_chunk$set(include = TRUE,
+                      warning = FALSE,
+                      message = FALSE,
+                      cache = FALSE,
+                      echo = FALSE)
+```
+
+```{r}
+rm(list = ls())
+library(tidyverse)
+library(microxanox)
+library(patchwork)
+library(here)
+```
+
+# Introduction
+
+To be written.
+
+# Two dimensions of response diversity
+
+I created communities containing species, and gave each species $i$ a value for the first derivative of it's response to an environmental variable ($x_i$).
+
+I think there are two dimensions (at least) of the diversity of these values. First, the spread of the distribution, which is what we already use in the ms. Here I use the standard deviation, i.e., sd($x$). This is not affected by the mean of $x$, i.e. is not affect by if the values of $x$ span zero or do not span zero. (I use sd($x$) rather than CV($x$) because the CV is very much affected by values of mean($x$) close to zero.)
+
+We do, however, (I think) consider it important if the values of $x$ include some negative and some positive values, and therefore should quantify this. I have done so with (sd($x$) - sd($|x|$)) / sd($x$). (I came up with this just by thinking... probably should have done some reading also.) This varies from zero to one, being zero when all $x$ have the same sign, and being one when there are only two unique values of $x$, say $x_1$ and $x_2$ and $x_1 = -x_2$. I'm  sure this is **not** the best thing to do, or even if it is very well justified, but it is at least independent of sd($x$), as a measure of this dimension should be, as is shown below in some examples.
+
+
+```{r}
+## Create the communities
+num_spp <- c(2, 4, 8, 16)
+max_minus_min <- seq(1, 10, length = 45)
+mean <- seq(-10, 10, length = 49)
+rd_vals <- function(num_spp, max_minus_min, mean) {
+  seq(mean-max_minus_min/2, mean+max_minus_min/2, length = num_spp)
+}
+dd <- crossing(num_spp,
+               max_minus_min,
+               mean) %>%
+  rowwise() %>%
+  mutate(rd_vals = list(rd_vals(num_spp, max_minus_min, mean))) %>%
+  unnest(cols = rd_vals) 
+
+## calculate the diversity metrics
+summary_stats <- dd %>%
+  group_by(num_spp, max_minus_min, mean) %>%
+  summarise(sd = sd(rd_vals),
+            #cv = sd/mean(rd_vals),
+            #cv_abs = sd/abs(mean(rd_vals)),
+            #sd_abs_vals = sd(abs(rd_vals)),
+            sign_sensitive = (sd - sd(abs(rd_vals))) / sd) %>%
+  pivot_longer(names_to = "variable", values_to = "value", 4:5)
+
+## wrangle the data for easier plotting
+all_data <- dd %>%
+  mutate(variable = "first_deriv_vals",
+         value = rd_vals) %>%
+  select(-rd_vals) %>%
+  bind_rows(summary_stats) %>%
+  mutate(variable = as_factor(variable))
+```
+
+## Communities varying only in spread
+
+Here we look at communities that only vary in the spread of $x$ and that do not differ in the second dimension (overlap with zero). As expected, sd($x$) varies, but the measure of the overlap with zero does not. In the first example, all communities have equal overlap with zero (Fig. \@ref(fig:XXX1)) and in the second none of the communities overlap zero (Fig. \@ref(fig:XXX2)).
+
+(ref:XXX1) Each column of dots corresponds to one community. Top panel shows the values of the first derivative of each of the species in the community. Middle is the sd($x$): the spread of the distribution. Bottom panel is the (sd($x$) - sd($|x|$)) / sd($x$) -- a measure of overlap with zero.
+
+```{r XXX1,  include=TRUE, fig.cap='(ref:XXX1)', fig.align="center", fig.height=4, fig.width=4}
+this_mean <- 0
+this_num_spp <- 8
+all_data %>%
+  filter(mean == this_mean,
+         num_spp == this_num_spp) %>%
+  ggplot(aes(x = max_minus_min, y = value)) +
+  geom_point() +
+  geom_hline(yintercept = 0, lty="dashed") +
+  facet_wrap( ~ variable, scales = "free_y", ncol = 1) +
+  xlab("Range of first derivative values in community") 
+
+
+
+```
+
+(ref:XXX2) Each column of dots corresponds to one community. Top panel shows the values of the first derivative of each of the species in the community. Middle is the sd($x$): the spread of the distribution. Bottom panel is the (sd($x$) - sd($|x|$)) / sd($x$) -- a measure of overlap with zero.
+
+```{r XXX2,  include=TRUE, fig.cap='(ref:XXX2)', fig.align="center", fig.height=4, fig.width=4}
+this_mean <- 2.5
+this_num_spp <- 8
+all_data %>%
+  filter(mean == this_mean,
+         num_spp == this_num_spp,
+         max_minus_min < 5) %>%
+  ggplot(aes(x = max_minus_min, y = value)) +
+  geom_point() +
+  geom_hline(yintercept = 0, lty="dashed") +
+  facet_wrap( ~ variable, scales = "free_y", ncol = 1) +
+  xlab("Range of first derivative values in community")
+```
+
+
+## Communities varying only in overlap
+
+Here we look at communities that only vary in the overlap of $x$ with zero, and that do not differ in spread. As expected, sd($x$) does not vary, but the measure of the overlap with zero does. It is zero while there is not overlap, then increases to a maximum when the mean is zero, and then decreases again (Fig. \@ref(fig:XXX3).
+
+(ref:XXX3) Each column of dots corresponds to one community. Top panel shows the values of the first derivative of each of the species in the community. Middle is the sd($x$): the spread of the distribution. Bottom panel is the (sd($x$) - sd($|x|$)) / sd($x$) -- a measure of overlap with zero.
+
+```{r XXX3,  include=TRUE, fig.cap='(ref:XXX3)', fig.align="center", fig.height=4, fig.width=4}
+this_max_minus_min <- 5.5
+this_num_spp <- 8
+all_data %>%
+  filter(max_minus_min == this_max_minus_min,
+         num_spp == this_num_spp) %>%
+  ggplot(aes(x = mean, y = value)) +
+  geom_point() +
+  geom_hline(yintercept = 0, lty="dashed") +
+  facet_wrap( ~ variable, scales = "free_y", ncol = 1) +
+  xlab("Mean of first derivative values in community") 
+```
+
+
+
+
+## Communities varying in both spread and overlap
+
+Here we look at communities that vary in both spread and the overlap. As expected, sd($x$) increases but the overlap measure does not. Then the overlap measure increases as the amount of overlap with zero increases (Fig. \@ref(fig:XXX4).
+
+(ref:XXX4) Each column of dots corresponds to one community. Top panel shows the values of the first derivative of each of the species in the community. Middle is the sd($x$): the spread of the distribution. Bottom panel is the (sd($x$) - sd($|x|$)) / sd($x$) -- a measure of overlap with zero. The data at values of less than 5 on the x-axis are the same as the data in Fig. \@ref(fig:XXX2).
+
+```{r XXX4,  include=TRUE, fig.cap='(ref:XXX4)', fig.align="center", fig.height=4, fig.width=4}
+this_mean <- 2.5
+this_num_spp <- 8
+all_data %>%
+  filter(mean == this_mean,
+         num_spp == this_num_spp) %>%
+  ggplot(aes(x = max_minus_min, y = value)) +
+  geom_point() +
+  geom_hline(yintercept = 0, lty="dashed") +
+  facet_wrap( ~ variable, scales = "free_y", ncol = 1) +
+  xlab("Range of first derivative values in community")
+```
+
+## Varying number of species
+
+This is the one I'm really not satisfied with. I think that either, or perhaps even both, dimension of response diversity should increase with species richness, but both actually decrease (Fig. \@ref(fig:XXX5)). I think this is why Kevin Gaston and I opted for the total branch length of the dendrogram of hierarchical clustering of the distance matrix -- it has this lovely property of only increasing (or staying the same) with increasing number of species. Anyway, I hand this over to you for contemplation, before continuing.
+
+(ref:XXX5) Each column of dots corresponds to one community. Top panel shows the values of the first derivative of each of the species in the community. Middle is the sd($x$): the spread of the distribution. Bottom panel is the (sd($x$) - sd($|x|$)) / sd($x$) -- a measure of overlap with zero.
+
+```{r XXX5,  include=TRUE, fig.cap='(ref:XXX5)', fig.align="center", fig.height=4, fig.width=4}
+this_mean <- 0
+this_num_spp <- 8
+this_max_minus_min <- 5.5
+all_data %>%
+  filter(mean == this_mean,
+         max_minus_min == this_max_minus_min) %>%
+  ggplot(aes(x = num_spp, y = value)) +
+  geom_point() +
+  geom_hline(yintercept = 0, lty="dashed") +
+  facet_wrap( ~ variable, scales = "free_y", ncol = 1) +
+  xlab("Number of species") 
+
+
+
+```
+
+
+# Leary & Petchey (2009) reanalysis
+
+This so far only reads in the r and K data and plots their response to temperature for the four species.
+
+```{r}
+rm(list = ls())
+r_vals <- read_csv(here("data/Leary_and_Petchey_r_values.csv")) %>%
+  mutate(parameter = "r")
+K_vals <- read_csv(here("data/Leary_and_Petchey_K_values.csv")) %>%
+  mutate(x = log10(x), parameter = "log10_K")
+rK_vals <- rbind(r_vals, K_vals) %>%
+  rename(value = x)
+rm(r_vals, K_vals)
+```
+
+```{r}
+rK_vals %>%
+ggplot(aes(x = temperature, y = value, col = species)) +
+  geom_point() +
+  geom_smooth() +
+  facet_wrap( ~ parameter, scales = "free", nrow = 2) 
+```
+
