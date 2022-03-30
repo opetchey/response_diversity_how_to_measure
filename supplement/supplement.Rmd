@@ -200,3 +200,35 @@ ggplot(aes(x = temperature, y = value, col = species)) +
   facet_wrap( ~ parameter, scales = "free", nrow = 2) 
 ```
 
+
+# Results of the systematic review
+
+Here are the results from the systematic review conducted by Samuel RP-J Ross in December 2021-January 2022. Columns are as follows: 
+
+*Date* = Date on which paper was included in review.
+*WoS_search* = Search string for reproducing systematic review (NA indicates papers not returned in WoS results).
+*Handled_by* = Intitials of author handling each paper during screening (SRP-JR = Samuel RP-J Ross).
+*Included* = Binary, included (1) or not (0) as an empirical paper that measures response diversity after all screening.
+*Authors* = Short form author list of each article. 
+*Title* = Title of article.
+*Journal* = Journal of article publication. 
+*Year* = Year of publication. 
+*Vol* = Volume of publication. 
+*Issue* = Issue of publication. 
+*Pg_start* = First page number of publication.
+*Pg_end* = Last page number of publication.
+*Article_ID* = Identifier of articles without page numbers.
+*DOI* = Digital object identifier (DOI) of article. 
+*Empirical_study* = Does the study use empirical data? 1 = yes, 0 = no, 0.5 = sort of (Theory papers etc.).
+*Measures_RD* = Does the empirical (or theoretical) study measure response diversity? 1 = yes, 0 = no, 0.5 = sort of.
+*RD_traits* = For papers that measure response diversity, do they measure functional response trait diversity? 0 = no, 0.5 = sort of, FDis = yes, using Functional Dispersion, RaoQ = yes, using Rao's Quadratic Entropy.
+*RD_Int_term* = For papers that measure response diversity, do they measure an interaction term between species responding to an environmental variable? 0 = no, 0.5 = sort of, 1 = yes.
+*RD_Other* = For papers that measure response diversity, do they take another approach (i.e. not traits or interaction terms)? 0 = no, 1 = yes. 
+*Method_Description* = Short written description to help clarify method (see individual articles for more details).
+*Notes* = Any remaining comments from SRP-JR to help justify inclusion/exclusion, or additional comments.
+
+```{r}
+review <- read_csv(here("data/WoS_results.csv"))
+review
+```
+
