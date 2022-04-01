@@ -21,9 +21,13 @@ knitr::opts_chunk$set(include = TRUE,
 ```{r}
 rm(list = ls())
 library(tidyverse)
-library(microxanox)
+#library(microxanox)
 library(patchwork)
+library(mgcv)
+library(gratia)
 library(here)
+Isfahan1 <- list(c("#4e3910", "#845d29", "#d8c29d", "#4fb6ca", "#178f92", "#175f5d", "#1d1f54"), c(5, 2, 4, 6, 1, 7, 3), colorblind=TRUE) # colour palette
+range01 <- function(x){(x-min(x))/(max(x)-min(x))} # function for standardising range 0-1
 ```
 
 # Introduction
@@ -176,6 +180,237 @@ all_data %>%
 
 ```
 
+
+# Producing Figures 2-3 based on simulated data
+
+This section will produce Figures 2-3 from the manuscript. The figures are inspired by a range of examples from the literature (see main text), but are based on simulated data.
+
+First, we'll generate a series of simulated communities that have high, medium, or low response diversity to an environmental variable [x], based on correlated or uncorrelated responses, and responding either linearly or nonlinearly.
+
+```{r}
+# generate an environmental variable (x), as a simple sequence of numbers
+x = seq(0, 1, length.out = 100)
+
+# generate species with different responses to the environment 
+# Linear responses:
+y1a <- 0.8-1*x; y2a <- 0.75-1* x; y3a <-0.85-1*x # responses are similar in direction and magnitude (low response diversity)
+y1b <- 0.5-0.2*x; y2b <- 0.75-1*x; y3b <-1-2.5*x # responses are similar in direction but not magnitude (medium response diversity)
+y1c <- 0.6-0.75*x; y2c <- rev(y1c); y3c <- rep(0.35, length(x)) # responses are not similar in direction or magnitude (high response diversity)
+
+# Nonlinear responses:
+y1d <- range01(dnorm(x,0.5,0.3)); y2d <- range01(dnorm(x,0.475,0.3)); y3d <- range01(dnorm(x,0.525,0.3)) # responses are similar in direction and magnitude (low response diversity)
+y1e <- range01(dnorm(x,0.5,0.3)); y2e <- range01(dnorm(x,0.2,0.3)); y3e <- range01(dnorm(x,0.8,0.3)) # responses are similar in direction but not magnitude (medium response diversity)
+y1f <- exp(-3*x); y2f <- rev(y1f); y3f <- 1-(y1f+y2f) # responses are not similar in direction or magnitude (high response diversity)
+```
+
+We'll model these species-environment relationships using generalized additive models (GAMs).
+
+```{r}
+# model individual species~environment relationships using GAM
+m1a <- gam(y1a~s(x)); m2a <- gam(y2a~s(x)); m3a <- gam(y3a~s(x))
+m1b <- gam(y1b~s(x)); m2b <- gam(y2b~s(x)); m3b <- gam(y3b~s(x))
+m1c <- gam(y1c~s(x)); m2c <- gam(y2c~s(x)); m3c <- gam(y3c~s(x))
+m1d <- gam(y1d~s(x)); m2d <- gam(y2d~s(x)); m3d <- gam(y3d~s(x))
+m1e <- gam(y1e~s(x)); m2e <- gam(y2e~s(x)); m3e <- gam(y3e~s(x))
+m1f <- gam(y1f~s(x)); m2f <- gam(y2f~s(x)); m3f <- gam(y3f~s(x))
+```
+
+Then we calculate the first derivatives of these relationships.
+
+```{r}
+# calculate first derivatives from models
+d1a <- derivatives(m1a); d2a <- derivatives(m2a); d3a <- derivatives(m3a)
+d1b <- derivatives(m1b); d2b <- derivatives(m2b); d3b <- derivatives(m3b)
+d1c <- derivatives(m1c); d2c <- derivatives(m2c); d3c <- derivatives(m3c)
+d1d <- derivatives(m1d); d2d <- derivatives(m2d); d3d <- derivatives(m3d)
+d1e <- derivatives(m1e); d2e <- derivatives(m2e); d3e <- derivatives(m3e)
+d1f <- derivatives(m1f); d2f <- derivatives(m2f); d3f <- derivatives(m3f)
+```
+
+Then we'll measure response diversity using the approach above. 
+
+*CODE HERE*
+
+
+Now we have all the data required to produce the figures from the manuscript. First, we'll produce *Figure 2*, which looks at linear performance-environment relationships: 
+
+```{r}
+# Y value range
+ymax<-max(y1a,y2a,y3a,y1b,y2b,y3b,y1c,y2c,y3c)
+ymin<-min(y1a,y2a,y3a,y1b,y2b,y3b,y1c,y2c,y3c)
+dmax<-max(d1a$derivative,d2a$derivative,d3a$derivative,d1b$derivative,d2b$derivative,d3b$derivative,d1c$derivative,d2c$derivative,d3c$derivative)
+dmin<-min(d1a$derivative,d2a$derivative,d3a$derivative,d1b$derivative,d2b$derivative,d3b$derivative,d1c$derivative,d2c$derivative,d3c$derivative)
+
+# panel a
+Fig_2a<-ggplot(data = NULL,mapping = aes(x = x,y = y1a)) +
+  theme_classic(base_size = 14) + 
+  labs(x = "Spring frost",y = "Chlorophyll production",title = "Low response diversity",tag = "a)") + 
+  geom_hline(yintercept = 0,
+             lty=2) +
+  geom_line(col = Isfahan1[[1]][2]) + 
+  geom_line(aes(y = y2a),
+            col = Isfahan1[[1]][4]) + 
+  geom_line(aes(y = y3a),
+            col = Isfahan1[[1]][6]) + 
+  lims(y = c(ymin,ymax))
+
+# panel b
+Fig_2b<-ggplot(data = NULL,mapping = aes(x = x,y = y1b)) +
+  theme_classic(base_size = 14) + 
+  labs(x = "Urbanisation",y = "Macroinvertebrate abundance",title = "Medium response diversity",tag = "b)") + 
+  geom_hline(yintercept = 0,
+             lty=2) +
+  geom_line(col = Isfahan1[[1]][2]) + 
+  geom_line(aes(y = y2b),
+            col = Isfahan1[[1]][4]) + 
+  geom_line(aes(y = y3b),
+            col = Isfahan1[[1]][6]) + 
+  lims(y = c(ymin,ymax))
+
+# panel c
+Fig_2c<-ggplot(data = NULL,mapping = aes(x = x,y = y1c)) +
+  theme_classic(base_size = 14) + 
+  labs(x = "Winter temperature",y = "Bee mass loss",title = "High response diversity",tag = "c)") + 
+  geom_hline(yintercept = 0,
+             lty=2) +
+  geom_line(col = Isfahan1[[1]][2]) + 
+  geom_line(aes(y = y2c),
+            col = Isfahan1[[1]][4]) + 
+  geom_line(aes(y = y3c),
+            col = Isfahan1[[1]][6]) + 
+  lims(y = c(ymin,ymax))
+
+# plot of d(Y)~X for model a
+Fig_2d<-ggplot(data = NULL,mapping = aes(x = d1a$data,y = d1a$derivative)) +
+  theme_classic(base_size = 14) + 
+  labs(x = "Spring frost",y = "Derivative (chlorophyll product.)",tag = "d)") + 
+  geom_hline(yintercept = 0,
+             lty=2) +
+  geom_line(col = Isfahan1[[1]][2]) + 
+  geom_line(aes(y = d2a$derivative),
+            col = Isfahan1[[1]][4]) + 
+  geom_line(aes(y = d3a$derivative),
+            col = Isfahan1[[1]][6]) + 
+  lims(y = c(dmin,dmax))
+
+# plot of d(Y)~X for model b
+Fig_2e<-ggplot(data = NULL,mapping = aes(x = d1b$data,y = d1b$derivative)) +
+  theme_classic(base_size = 14) + 
+  labs(x = "Urbanisation",y = "Derivative (macroinvert. abundance)",tag = "e)") + 
+  geom_hline(yintercept = 0,
+             lty=2) +
+  geom_line(col = Isfahan1[[1]][2]) + 
+  geom_line(aes(y = d2b$derivative),
+            col = Isfahan1[[1]][4]) + 
+  geom_line(aes(y = d3b$derivative),
+            col = Isfahan1[[1]][6]) + 
+  lims(y = c(dmin,dmax))
+
+# plot of d(Y)~X for model c
+Fig_2f<-ggplot(data = NULL,mapping = aes(x = d1c$data,y = d1c$derivative)) +
+  theme_classic(base_size = 14) + 
+  labs(x = "Winter temperature",y = "Derivative (bee mass loss)",tag = "f)") + 
+  geom_hline(yintercept = 0,
+             lty=2) +
+  geom_line(col = Isfahan1[[1]][2]) + 
+  geom_line(aes(y = d2c$derivative),
+            col = Isfahan1[[1]][4]) + 
+  geom_line(aes(y = d3c$derivative),
+            col = Isfahan1[[1]][6]) + 
+  lims(y = c(dmin,dmax))
+
+(Fig_2a + Fig_2b + Fig_2c)/(Fig_2d + Fig_2e + Fig_2f)
+```
+
+Next, we'll produce *Figure 3* to look at _nonlinear_ performance-environment relationships: 
+
+```{r}
+# Y value range
+ymax<-max(y1d,y2d,y3d,y1e,y2e,y3e,y1f,y2f,y3f)
+ymin<-min(y1d,y2d,y3d,y1e,y2e,y3e,y1f,y2f,y3f)
+dmax<-max(d1d$derivative,d2d$derivative,d3d$derivative,d1e$derivative,d2e$derivative,d3e$derivative,d1f$derivative,d2f$derivative,d3f$derivative)
+dmin<-min(d1d$derivative,d2d$derivative,d3d$derivative,d1e$derivative,d2e$derivative,d3e$derivative,d1f$derivative,d2f$derivative,d3f$derivative)
+
+# panel a
+Fig_3a<-ggplot(data = NULL,mapping = aes(x = x,y = y1d)) +
+  theme_classic(base_size = 14) + 
+  labs(x = "Flowering plant abundance",y = "Flowering plant rate of increase",title = "Low response diversity",tag = "a)") + 
+  geom_hline(yintercept = 0,
+             lty=2) +
+  geom_line(col = Isfahan1[[1]][2]) + 
+  geom_line(aes(y = y2d),
+            col = Isfahan1[[1]][4]) + 
+  geom_line(aes(y = y3d),
+            col = Isfahan1[[1]][6]) + 
+  lims(y = c(ymin,ymax))
+
+# panel b
+Fig_3b<-ggplot(data = NULL,mapping = aes(x = x,y = y1e)) +
+  theme_classic(base_size = 14) + 
+  labs(x = "Grazing pressure",y = "Seedling establishment",title = "Medium response diversity",tag = "b)") + 
+  geom_hline(yintercept = 0,
+             lty=2) +
+  geom_line(col = Isfahan1[[1]][2]) + 
+  geom_line(aes(y = y2e),
+            col = Isfahan1[[1]][4]) + 
+  geom_line(aes(y = y3e),
+            col = Isfahan1[[1]][6]) + 
+  lims(y = c(ymin,ymax))
+
+# panel c
+Fig_3c<-ggplot(data = NULL,mapping = aes(x = x,y = y1f)) +
+  theme_classic(base_size = 14) + 
+  labs(x = "Fire frequency",y = "Tree density",title = "High response diversity",tag = "c)") + 
+  geom_hline(yintercept = 0,
+             lty=2) +
+  geom_line(col = Isfahan1[[1]][2]) + 
+  geom_line(aes(y = y2f),
+            col = Isfahan1[[1]][4]) + 
+  geom_line(aes(y = y3f),
+            col = Isfahan1[[1]][6]) + 
+  lims(y = c(ymin,ymax))
+
+# plot of d(Y)~X for model a
+Fig_3d<-ggplot(data = NULL,mapping = aes(x = d1d$data,y = d1d$derivative)) +
+  theme_classic(base_size = 14) + 
+  labs(x = "Flowering plant abundance",y = "Derivative (rate of increase)",tag = "d)") + 
+  geom_hline(yintercept = 0,
+             lty=2) +
+  geom_line(col = Isfahan1[[1]][2]) + 
+  geom_line(aes(y = d2d$derivative),
+            col = Isfahan1[[1]][4]) + 
+  geom_line(aes(y = d3d$derivative),
+            col = Isfahan1[[1]][6]) + 
+  lims(y = c(dmin,dmax))
+
+# plot of d(Y)~X for model b
+Fig_3e<-ggplot(data = NULL,mapping = aes(x = d1e$data,y = d1e$derivative)) +
+  theme_classic(base_size = 14) + 
+  labs(x = "Grazing pressure",y = "Derivative (seedling establish.)",tag = "e)") + 
+  geom_hline(yintercept = 0,
+             lty=2) +
+  geom_line(col = Isfahan1[[1]][2]) + 
+  geom_line(aes(y = d2e$derivative),
+            col = Isfahan1[[1]][4]) + 
+  geom_line(aes(y = d3e$derivative),
+            col = Isfahan1[[1]][6]) + 
+  lims(y = c(dmin,dmax))
+
+# plot of d(Y)~X for model c
+Fig_3f<-ggplot(data = NULL,mapping = aes(x = d1f$data,y = d1f$derivative)) +
+  theme_classic(base_size = 14) + 
+  labs(x = "Fire frequency",y = "Derivative (tree density)",tag = "f)") + 
+  geom_hline(yintercept = 0,
+             lty=2) +
+  geom_line(col = Isfahan1[[1]][2]) + 
+  geom_line(aes(y = d2f$derivative),
+            col = Isfahan1[[1]][4]) + 
+  geom_line(aes(y = d3f$derivative),
+            col = Isfahan1[[1]][6]) + 
+  lims(y = c(dmin,dmax))
+
+(Fig_3a + Fig_3b + Fig_3c)/(Fig_3d + Fig_3e + Fig_3f)
+```
 
 # Leary & Petchey (2009) reanalysis
 
