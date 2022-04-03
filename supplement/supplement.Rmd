@@ -21,12 +21,16 @@ knitr::opts_chunk$set(include = TRUE,
 ```{r}
 rm(list = ls())
 library(tidyverse)
-#library(microxanox)
 library(patchwork)
 library(mgcv)
 library(gratia)
+library(hypervolume)
 library(here)
+
+source(here("r/our_functions.r"))
+
 Isfahan1 <- list(c("#4e3910", "#845d29", "#d8c29d", "#4fb6ca", "#178f92", "#175f5d", "#1d1f54"), c(5, 2, 4, 6, 1, 7, 3), colorblind=TRUE) # colour palette
+
 range01 <- function(x){(x-min(x))/(max(x)-min(x))} # function for standardising range 0-1
 ```
 
@@ -34,7 +38,7 @@ range01 <- function(x){(x-min(x))/(max(x)-min(x))} # function for standardising 
 
 To be written.
 
-# Two dimensions of response diversity
+# SD - Two dimensions of response diversity
 
 I created communities containing species, and gave each species $i$ a value for the first derivative of it's response to an environmental variable ($x_i$).
 
@@ -46,8 +50,8 @@ We do, however, (I think) consider it important if the values of $x$ include som
 ```{r}
 ## Create the communities
 num_spp <- c(2, 4, 8, 16)
-max_minus_min <- seq(1, 10, length = 45)
-mean <- seq(-10, 10, length = 49)
+max_minus_min <- round(seq(1, 15, length = 45),3)
+mean <- round(seq(-10, 10, length = 49),3)
 rd_vals <- function(num_spp, max_minus_min, mean) {
   seq(mean-max_minus_min/2, mean+max_minus_min/2, length = num_spp)
 }
@@ -56,16 +60,25 @@ dd <- crossing(num_spp,
                mean) %>%
   rowwise() %>%
   mutate(rd_vals = list(rd_vals(num_spp, max_minus_min, mean))) %>%
-  unnest(cols = rd_vals) 
+  unnest(cols = rd_vals)
+```
 
+
+```{r}
+## Set which measure of response diversity used
+rd_stat <- "sd"
+```
+
+
+```{r}
 ## calculate the diversity metrics
 summary_stats <- dd %>%
   group_by(num_spp, max_minus_min, mean) %>%
-  summarise(sd = sd(rd_vals),
+  summarise(sd = resp_div(rd_vals, stat = rd_stat, sign_sens = FALSE),
             #cv = sd/mean(rd_vals),
             #cv_abs = sd/abs(mean(rd_vals)),
             #sd_abs_vals = sd(abs(rd_vals)),
-            sign_sensitive = (sd - sd(abs(rd_vals))) / sd) %>%
+            sign_sensitive = resp_div(rd_vals, stat = rd_stat, sign_sens = TRUE)) %>%
   pivot_longer(names_to = "variable", values_to = "value", 4:5)
 
 ## wrangle the data for easier plotting
@@ -123,7 +136,7 @@ Here we look at communities that only vary in the overlap of $x$ with zero, and 
 (ref:XXX3) Each column of dots corresponds to one community. Top panel shows the values of the first derivative of each of the species in the community. Middle is the sd($x$): the spread of the distribution. Bottom panel is the (sd($x$) - sd($|x|$)) / sd($x$) -- a measure of overlap with zero.
 
 ```{r XXX3,  include=TRUE, fig.cap='(ref:XXX3)', fig.align="center", fig.height=4, fig.width=4}
-this_max_minus_min <- 5.5
+this_max_minus_min <- 5.455
 this_num_spp <- 8
 all_data %>%
   filter(max_minus_min == this_max_minus_min,
@@ -166,7 +179,7 @@ This is the one I'm really not satisfied with. I think that either, or perhaps e
 ```{r XXX5,  include=TRUE, fig.cap='(ref:XXX5)', fig.align="center", fig.height=4, fig.width=4}
 this_mean <- 0
 this_num_spp <- 8
-this_max_minus_min <- 5.5
+this_max_minus_min <- 5.455
 all_data %>%
   filter(mean == this_mean,
          max_minus_min == this_max_minus_min) %>%
@@ -178,6 +191,132 @@ all_data %>%
 
 
 
+```
+
+# Range -- Two dimensions of response diversity
+
+This section duplicates the previous one, but with range instead of SD.
+Not that text has not yet been revise to read range rather than SD.
+
+```{r}
+## Set which measure of response diversity used
+rd_stat <- "range"
+```
+
+```{r}
+## calculate the diversity metrics
+summary_stats <- dd %>%
+  group_by(num_spp, max_minus_min, mean) %>%
+  summarise(range = resp_div(rd_vals, stat = rd_stat, sign_sens = FALSE),
+            #cv = sd/mean(rd_vals),
+            #cv_abs = sd/abs(mean(rd_vals)),
+            #sd_abs_vals = sd(abs(rd_vals)),
+            sign_sensitive = resp_div(rd_vals, stat = rd_stat, sign_sens = TRUE)) %>%
+  pivot_longer(names_to = "variable", values_to = "value", 4:5)
+
+## wrangle the data for easier plotting
+all_data <- dd %>%
+  mutate(variable = "first_deriv_vals",
+         value = rd_vals) %>%
+  select(-rd_vals) %>%
+  bind_rows(summary_stats) %>%
+  mutate(variable = as_factor(variable))
+```
+
+## Communities varying only in spread
+
+
+
+(ref:XXX6) XXX
+
+```{r XXX6,  include=TRUE, fig.cap='(ref:XXX6)', fig.align="center", fig.height=4, fig.width=4}
+this_mean <- 0
+this_num_spp <- 8
+all_data %>%
+  filter(mean == this_mean,
+         num_spp == this_num_spp) %>%
+  ggplot(aes(x = max_minus_min, y = value)) +
+  geom_point() +
+  geom_hline(yintercept = 0, lty="dashed") +
+  facet_wrap( ~ variable, scales = "free_y", ncol = 1) +
+  xlab("Range of first derivative values in community") 
+
+
+
+```
+
+(ref:XXX7) XXX
+
+```{r XXX7,  include=TRUE, fig.cap='(ref:XXX7)', fig.align="center", fig.height=4, fig.width=4}
+this_mean <- 2.5
+this_num_spp <- 8
+all_data %>%
+  filter(mean == this_mean,
+         num_spp == this_num_spp,
+         max_minus_min < 5) %>%
+  ggplot(aes(x = max_minus_min, y = value)) +
+  geom_point() +
+  geom_hline(yintercept = 0, lty="dashed") +
+  facet_wrap( ~ variable, scales = "free_y", ncol = 1) +
+  xlab("Range of first derivative values in community")
+```
+
+
+## Communities varying only in overlap
+
+Here we look at communities that only vary in the overlap of $x$ with zero, and that do not differ in spread. As expected, sd($x$) does not vary, but the measure of the overlap with zero does. It is zero while there is not overlap, then increases to a maximum when the mean is zero, and then decreases again (Fig. \@ref(fig:XXX3).
+
+(ref:XXX8) XXX
+
+```{r XXX8,  include=TRUE, fig.cap='(ref:XXX8)', fig.align="center", fig.height=4, fig.width=4}
+this_max_minus_min <- 5.455
+this_num_spp <- 8
+all_data %>%
+  filter(max_minus_min == this_max_minus_min,
+         num_spp == this_num_spp) %>%
+  ggplot(aes(x = mean, y = value)) +
+  geom_point() +
+  geom_hline(yintercept = 0, lty="dashed") +
+  facet_wrap( ~ variable, scales = "free_y", ncol = 1) +
+  xlab("Mean of first derivative values in community") 
+```
+
+
+
+
+## Communities varying in both spread and overlap
+
+(ref:XXX9) XXX
+
+```{r XXX9,  include=TRUE, fig.cap='(ref:XXX9)', fig.align="center", fig.height=4, fig.width=4}
+this_mean <- 2.5
+this_num_spp <- 8
+all_data %>%
+  filter(mean == this_mean,
+         num_spp == this_num_spp) %>%
+  ggplot(aes(x = max_minus_min, y = value)) +
+  geom_point() +
+  geom_hline(yintercept = 0, lty="dashed") +
+  facet_wrap( ~ variable, scales = "free_y", ncol = 1) +
+  xlab("Range of first derivative values in community")
+```
+
+## Varying number of species
+
+(ref:XXX10) XXX
+
+```{r XXX10,  include=TRUE, fig.cap='(ref:XXX10)', fig.align="center", fig.height=4, fig.width=4}
+this_mean <- 0
+this_num_spp <- 8
+this_max_minus_min <- 5.455
+all_data %>%
+  filter(mean == this_mean,
+         max_minus_min == this_max_minus_min) %>%
+  ggplot(aes(x = num_spp, y = value)) +
+  geom_point() +
+  geom_hline(yintercept = 0, lty="dashed") +
+  facet_wrap( ~ variable, scales = "free_y", ncol = 1) +
+  xlab("Number of species") 
 ```
 
 
@@ -417,7 +556,7 @@ Fig_3f<-ggplot(data = NULL,mapping = aes(x = d1f$data,y = d1f$derivative)) +
 This so far only reads in the r and K data and plots their response to temperature for the four species.
 
 ```{r}
-rm(list = ls())
+#rm(list = ls())
 r_vals <- read_csv(here("data/Leary_and_Petchey_r_values.csv")) %>%
   mutate(parameter = "r")
 K_vals <- read_csv(here("data/Leary_and_Petchey_K_values.csv")) %>%
