@@ -1,6 +1,6 @@
 ---
 title: Supplementary information to report "How to measure response diversity"
-author: "Samuel R.P-J. Ross1, Owen L. Petchey, Takehiro Sasaki, David Armitage"
+author: "Samuel R.P-J. Ross1, Owen L. Petchey, Takehiro Sasaki, David W. Armitage"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   bookdown::html_document2:
@@ -22,6 +22,7 @@ knitr::opts_chunk$set(include = TRUE,
 rm(list = ls())
 library(tidyverse)
 library(patchwork)
+library(ggtext)
 library(mgcv)
 library(gratia)
 library(hypervolume)
@@ -29,9 +30,6 @@ library(here)
 
 source(here("r/our_functions.r"))
 
-Isfahan1 <- list(c("#4e3910", "#845d29", "#d8c29d", "#4fb6ca", "#178f92", "#175f5d", "#1d1f54"), c(5, 2, 4, 6, 1, 7, 3), colorblind=TRUE) # colour palette
-
-range01 <- function(x){(x-min(x))/(max(x)-min(x))} # function for standardising range 0-1
 ```
 
 # Introduction
@@ -319,7 +317,6 @@ all_data %>%
   xlab("Number of species") 
 ```
 
-
 # Producing Figures 2-3 based on simulated data
 
 This section will produce Figures 2-3 from the manuscript. The figures are inspired by a range of examples from the literature (see main text), but are based on simulated data.
@@ -368,17 +365,55 @@ d1f <- derivatives(m1f); d2f <- derivatives(m2f); d3f <- derivatives(m3f)
 
 Then we'll measure response diversity using the approach above. 
 
-*CODE HERE*
+```{r}
 
+# calculate response diversity for model a
+rdiv_a<-data.frame('data' = d1a$data, 'sp.1' = d1a$derivative, 'sp.2' = d2a$derivative, 'sp.3' = d3a$derivative)
+rdiv_a$rdiv<-apply(rdiv_a[,c(2:4)], 1, resp_div, stat = "range", sign_sens = F)
+rdiv_a$sign<-apply(rdiv_a[,c(2:4)], 1, resp_div, stat = "range", sign_sens = T)
+rdiv_a$Med<-median(rdiv_a$rdiv)
+
+# calculate response diversity for model b
+rdiv_b<-data.frame('data' = d1b$data, 'sp.1' = d1b$derivative, 'sp.2' = d2b$derivative, 'sp.3' = d3b$derivative)
+rdiv_b$rdiv<-apply(rdiv_b[,c(2:4)], 1, resp_div, stat = "range", sign_sens = F)
+rdiv_b$sign<-apply(rdiv_b[,c(2:4)], 1, resp_div, stat = "range", sign_sens = T)
+rdiv_b$Med<-median(rdiv_b$rdiv)
+
+# calculate response diversity for model c
+rdiv_c<-data.frame('data' = d1c$data, 'sp.1' = d1c$derivative, 'sp.2' = d2c$derivative, 'sp.3' = d3c$derivative)
+rdiv_c$rdiv<-apply(rdiv_c[,c(2:4)], 1, resp_div, stat = "range", sign_sens = F)
+rdiv_c$sign<-apply(rdiv_c[,c(2:4)], 1, resp_div, stat = "range", sign_sens = T)
+rdiv_c$Med<-median(rdiv_c$rdiv)
+
+# calculate response diversity for model d
+rdiv_d<-data.frame('data' = d1d$data, 'sp.1' = d1d$derivative, 'sp.2' = d2d$derivative, 'sp.3' = d3d$derivative)
+rdiv_d$rdiv<-apply(rdiv_d[,c(2:4)], 1, resp_div, stat = "range", sign_sens = F)
+rdiv_d$sign<-apply(rdiv_d[,c(2:4)], 1, resp_div, stat = "range", sign_sens = T)
+rdiv_d$Med<-median(rdiv_d$rdiv)
+
+# calculate response diversity for model e
+rdiv_e<-data.frame('data' = d1e$data, 'sp.1' = d1e$derivative, 'sp.2' = d2e$derivative, 'sp.3' = d3e$derivative)
+rdiv_e$rdiv<-apply(rdiv_e[,c(2:4)], 1, resp_div, stat = "range", sign_sens = F)
+rdiv_e$sign<-apply(rdiv_e[,c(2:4)], 1, resp_div, stat = "range", sign_sens = T)
+rdiv_e$Med<-median(rdiv_e$rdiv)
+
+# calculate response diversity for model f
+rdiv_f<-data.frame('data' = d1f$data, 'sp.1' = d1f$derivative, 'sp.2' = d2f$derivative, 'sp.3' = d3f$derivative)
+rdiv_f$rdiv<-apply(rdiv_f[,c(2:4)], 1, resp_div, stat = "range", sign_sens = F)
+rdiv_f$sign<-apply(rdiv_f[,c(2:4)], 1, resp_div, stat = "range", sign_sens = T)
+rdiv_f$Med<-median(rdiv_f$rdiv)
+
+```
 
 Now we have all the data required to produce the figures from the manuscript. First, we'll produce *Figure 2*, which looks at linear performance-environment relationships: 
 
 ```{r}
 # Y value range
-ymax<-max(y1a,y2a,y3a,y1b,y2b,y3b,y1c,y2c,y3c)
-ymin<-min(y1a,y2a,y3a,y1b,y2b,y3b,y1c,y2c,y3c)
+ymax<-max(y1a,y2a,y3a,y1b,y2b,y3b,y1c,y2c,y3c);ymin<-min(y1a,y2a,y3a,y1b,y2b,y3b,y1c,y2c,y3c)
 dmax<-max(d1a$derivative,d2a$derivative,d3a$derivative,d1b$derivative,d2b$derivative,d3b$derivative,d1c$derivative,d2c$derivative,d3c$derivative)
 dmin<-min(d1a$derivative,d2a$derivative,d3a$derivative,d1b$derivative,d2b$derivative,d3b$derivative,d1c$derivative,d2c$derivative,d3c$derivative)
+rmax<-max(rdiv_a$rdiv,rdiv_b$rdiv,rdiv_c$rdiv);rmin<-0
+smax<-1;smin<-0
 
 # panel a
 Fig_2a<-ggplot(data = NULL,mapping = aes(x = x,y = y1a)) +
@@ -419,7 +454,7 @@ Fig_2c<-ggplot(data = NULL,mapping = aes(x = x,y = y1c)) +
             col = Isfahan1[[1]][6]) + 
   lims(y = c(ymin,ymax))
 
-# plot of d(Y)~X for model a
+# panel d
 Fig_2d<-ggplot(data = NULL,mapping = aes(x = d1a$data,y = d1a$derivative)) +
   theme_classic(base_size = 14) + 
   labs(x = "Spring frost",y = "Derivative (chlorophyll product.)",tag = "d)") + 
@@ -432,7 +467,7 @@ Fig_2d<-ggplot(data = NULL,mapping = aes(x = d1a$data,y = d1a$derivative)) +
             col = Isfahan1[[1]][6]) + 
   lims(y = c(dmin,dmax))
 
-# plot of d(Y)~X for model b
+# panel e
 Fig_2e<-ggplot(data = NULL,mapping = aes(x = d1b$data,y = d1b$derivative)) +
   theme_classic(base_size = 14) + 
   labs(x = "Urbanisation",y = "Derivative (macroinvert. abundance)",tag = "e)") + 
@@ -445,7 +480,7 @@ Fig_2e<-ggplot(data = NULL,mapping = aes(x = d1b$data,y = d1b$derivative)) +
             col = Isfahan1[[1]][6]) + 
   lims(y = c(dmin,dmax))
 
-# plot of d(Y)~X for model c
+# panel f
 Fig_2f<-ggplot(data = NULL,mapping = aes(x = d1c$data,y = d1c$derivative)) +
   theme_classic(base_size = 14) + 
   labs(x = "Winter temperature",y = "Derivative (bee mass loss)",tag = "f)") + 
@@ -458,17 +493,75 @@ Fig_2f<-ggplot(data = NULL,mapping = aes(x = d1c$data,y = d1c$derivative)) +
             col = Isfahan1[[1]][6]) + 
   lims(y = c(dmin,dmax))
 
-(Fig_2a + Fig_2b + Fig_2c)/(Fig_2d + Fig_2e + Fig_2f)
+# panel g
+Fig_2ga<-ggplot(data = rdiv_a,mapping = aes(x = data,y = rdiv)) +
+  theme_classic(base_size = 14) + 
+  labs(x = NULL,y = "Range (derivatives)",tag = "g)") + 
+  geom_hline(yintercept = rdiv_a$Med,lty=2) +
+  geom_line() + 
+  geom_richtext(mapping = aes(x = 0.85,
+                              y = rdiv_a$Med+0.25),
+                size=4.5,
+                label.color = NA,
+                label = paste("RDiv^Med =",paste0(round(rdiv_a$Med,digits = 2)))) +
+  lims(y = c(rmin,rmax))
+Fig_2gb<-ggplot(data = rdiv_a,mapping = aes(x = data,y = sign)) +
+  theme_bw(base_size = 14)+
+  labs(x = "Spring frost",y = "Sign") + 
+  geom_line() + 
+  lims(y = c(smin,smax))
+Fig_2gb<-Fig_2gb + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+# panel h
+Fig_2ha<-ggplot(data = rdiv_b,mapping = aes(x = data,y = rdiv)) +
+  theme_classic(base_size = 14) + 
+  labs(x = NULL,y = "Range (derivatives)",tag = "h)") + 
+  geom_hline(yintercept = rdiv_b$Med,lty=2) +
+  geom_line() + 
+  geom_richtext(mapping = aes(x = 0.85,
+                              y = rdiv_b$Med-0.25),
+                size=4.5,
+                label.color = NA,
+                label = paste("RDiv^Med =",paste0(round(rdiv_b$Med,digits = 2)))) +
+  lims(y = c(rmin,rmax))
+Fig_2hb<-ggplot(data = rdiv_b,mapping = aes(x = data,y = sign)) +
+  theme_bw(base_size = 14)+
+  labs(x = "Urbanisation",y = "Sign") + 
+  geom_line() + 
+  lims(y = c(smin,smax))
+Fig_2hb<-Fig_2hb + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+# panel i
+Fig_2ia<-ggplot(data = rdiv_c,mapping = aes(x = data,y = rdiv)) +
+  theme_classic(base_size = 14) + 
+  labs(x = NULL,y = "Range (derivatives)",tag = "i)") + 
+  geom_hline(yintercept = rdiv_c$Med,lty=2) +
+  geom_line() + 
+  geom_richtext(mapping = aes(x = 0.85,
+                              y = rdiv_c$Med+0.25),
+                size=4.5,
+                label.color = NA,
+                label = paste("RDiv^Med =",paste0(round(rdiv_c$Med,digits = 2)))) +
+  lims(y = c(rmin,rmax))
+Fig_2ib<-ggplot(data = rdiv_c,mapping = aes(x = data,y = sign)) +
+  theme_bw(base_size = 14)+
+  labs(x = "Winter temperature",y = "Sign") + 
+  geom_line() + 
+  lims(y = c(smin,smax))
+Fig_2ib<-Fig_2ib + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+(Fig_2a + Fig_2b + Fig_2c)/(Fig_2d + Fig_2e + Fig_2f)/(Fig_2ga + Fig_2ha + Fig_2ia)/(Fig_2gb + Fig_2hb + Fig_2ib) + plot_layout(heights = c(3,3,3,1))
 ```
 
 Next, we'll produce *Figure 3* to look at _nonlinear_ performance-environment relationships: 
 
 ```{r}
 # Y value range
-ymax<-max(y1d,y2d,y3d,y1e,y2e,y3e,y1f,y2f,y3f)
-ymin<-min(y1d,y2d,y3d,y1e,y2e,y3e,y1f,y2f,y3f)
+ymax<-max(y1d,y2d,y3d,y1e,y2e,y3e,y1f,y2f,y3f);ymin<-min(y1d,y2d,y3d,y1e,y2e,y3e,y1f,y2f,y3f)
 dmax<-max(d1d$derivative,d2d$derivative,d3d$derivative,d1e$derivative,d2e$derivative,d3e$derivative,d1f$derivative,d2f$derivative,d3f$derivative)
 dmin<-min(d1d$derivative,d2d$derivative,d3d$derivative,d1e$derivative,d2e$derivative,d3e$derivative,d1f$derivative,d2f$derivative,d3f$derivative)
+rmax<-max(rdiv_d$rdiv,rdiv_e$rdiv,rdiv_f$rdiv);rmin<-0
+smax<-1;smin<-0
 
 # panel a
 Fig_3a<-ggplot(data = NULL,mapping = aes(x = x,y = y1d)) +
@@ -509,7 +602,7 @@ Fig_3c<-ggplot(data = NULL,mapping = aes(x = x,y = y1f)) +
             col = Isfahan1[[1]][6]) + 
   lims(y = c(ymin,ymax))
 
-# plot of d(Y)~X for model a
+# panel d
 Fig_3d<-ggplot(data = NULL,mapping = aes(x = d1d$data,y = d1d$derivative)) +
   theme_classic(base_size = 14) + 
   labs(x = "Flowering plant abundance",y = "Derivative (rate of increase)",tag = "d)") + 
@@ -522,7 +615,7 @@ Fig_3d<-ggplot(data = NULL,mapping = aes(x = d1d$data,y = d1d$derivative)) +
             col = Isfahan1[[1]][6]) + 
   lims(y = c(dmin,dmax))
 
-# plot of d(Y)~X for model b
+# panel e
 Fig_3e<-ggplot(data = NULL,mapping = aes(x = d1e$data,y = d1e$derivative)) +
   theme_classic(base_size = 14) + 
   labs(x = "Grazing pressure",y = "Derivative (seedling establish.)",tag = "e)") + 
@@ -535,7 +628,7 @@ Fig_3e<-ggplot(data = NULL,mapping = aes(x = d1e$data,y = d1e$derivative)) +
             col = Isfahan1[[1]][6]) + 
   lims(y = c(dmin,dmax))
 
-# plot of d(Y)~X for model c
+# panel f
 Fig_3f<-ggplot(data = NULL,mapping = aes(x = d1f$data,y = d1f$derivative)) +
   theme_classic(base_size = 14) + 
   labs(x = "Fire frequency",y = "Derivative (tree density)",tag = "f)") + 
@@ -548,7 +641,65 @@ Fig_3f<-ggplot(data = NULL,mapping = aes(x = d1f$data,y = d1f$derivative)) +
             col = Isfahan1[[1]][6]) + 
   lims(y = c(dmin,dmax))
 
-(Fig_3a + Fig_3b + Fig_3c)/(Fig_3d + Fig_3e + Fig_3f)
+# panel g
+Fig_3ga<-ggplot(data = rdiv_d,mapping = aes(x = data,y = rdiv)) +
+  theme_classic(base_size = 14) + 
+  labs(x = NULL,y = "Range (derivatives)",tag = "g)") + 
+  geom_hline(yintercept = rdiv_d$Med,lty=2) +
+  geom_line() + 
+  geom_richtext(mapping = aes(x = 0.85,
+                              y = rdiv_d$Med+1.25),
+                size=4.5,
+                label.color = NA,
+                label = paste("RDiv^Med =",paste0(round(rdiv_d$Med,digits = 2)))) +
+  lims(y = c(rmin,rmax))
+Fig_3gb<-ggplot(data = rdiv_d,mapping = aes(x = data,y = sign)) +
+  theme_bw(base_size = 14)+
+  labs(x = "Flowering plant abundance",y = "Sign") + 
+  geom_line() + 
+  lims(y = c(smin,smax))
+Fig_3gb<-Fig_3gb + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+# panel h
+Fig_3ha<-ggplot(data = rdiv_e,mapping = aes(x = data,y = rdiv)) +
+  theme_classic(base_size = 14) + 
+  labs(x = NULL,y = "Range (derivatives)",tag = "h)") + 
+  geom_hline(yintercept = rdiv_e$Med,lty=2) +
+  geom_line() + 
+  geom_richtext(mapping = aes(x = 0.85,
+                              y = rdiv_e$Med+1.25),
+                size=4.5,
+                label.color = NA,
+                label = paste("RDiv^Med =",paste0(round(rdiv_e$Med,digits = 2)))) +
+  lims(y = c(rmin,rmax))
+Fig_3hb<-ggplot(data = rdiv_e,mapping = aes(x = data,y = sign)) +
+  theme_bw(base_size = 14)+
+  labs(x = "Grazing pressure",y = "Sign") + 
+  geom_line() + 
+  lims(y = c(smin,smax))
+Fig_3hb<-Fig_3hb + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+# panel i
+Fig_3ia<-ggplot(data = rdiv_f,mapping = aes(x = data,y = rdiv)) +
+  theme_classic(base_size = 14) + 
+  labs(x = NULL,y = "Range (derivatives)",tag = "i)") + 
+  geom_hline(yintercept = rdiv_f$Med,lty=2) +
+  geom_line() + 
+  geom_richtext(mapping = aes(x = 0.85,
+                              y = rdiv_f$Med-1.25),
+                size=4.5,
+                label.color = NA,
+                label = paste("RDiv^Med =",paste0(round(rdiv_f$Med,digits = 2)))) +
+  lims(y = c(rmin,rmax))
+Fig_3ib<-ggplot(data = rdiv_f,mapping = aes(x = data,y = sign)) +
+  theme_bw(base_size = 14)+
+  labs(x = "Fire frequency",y = "Sign") + 
+  geom_line() + 
+  lims(y = c(smin,smax))
+Fig_3ib<-Fig_3ib + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+(Fig_3a + Fig_3b + Fig_3c)/(Fig_3d + Fig_3e + Fig_3f)/(Fig_3ga + Fig_3ha + Fig_3ia)/(Fig_3gb + Fig_3hb + Fig_3ib) + plot_layout(heights = c(3,3,3,1))
+
 ```
 
 # Leary & Petchey (2009) reanalysis
