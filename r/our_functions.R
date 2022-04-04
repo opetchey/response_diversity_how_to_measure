@@ -1,6 +1,4 @@
-## none yet
-
-
+## Function for calculating various types of measure of response diversity.
 resp_div <- function(x, stat = "range", sign_sens = TRUE) {
   
   flag <- TRUE # flag to catch if all values are the same
@@ -49,8 +47,9 @@ resp_div <- function(x, stat = "range", sign_sens = TRUE) {
   
 }
   
-# colour palette
-Isfahan1 <- list(c("#4e3910", "#845d29", "#d8c29d", "#4fb6ca", "#178f92", "#175f5d", "#1d1f54"), c(5, 2, 4, 6, 1, 7, 3), colorblind=TRUE) 
-
 # function for standardising range 0-1
-range01 <- function(x){(x-min(x))/(max(x)-min(x))} 
+range01 <- function(x) {
+  (x-min(x))/(max(x)-min(x))} 
+
+# colour palette ----
+Isfahan1 <- list(c("#4e3910", "#845d29", "#d8c29d", "#4fb6ca", "#178f92", "#175f5d", "#1d1f54"), c(5, 2, 4, 6, 1, 7, 3), colorblind=TRUE) 
