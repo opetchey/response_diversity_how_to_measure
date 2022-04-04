@@ -704,7 +704,7 @@ Fig_3ib<-Fig_3ib + theme(panel.grid.major = element_blank(), panel.grid.minor = 
 
 # Leary & Petchey (2009) reanalysis
 
-This so far only reads in the r and K data and plots their response to temperature for the four species.
+This section reanalyses the data from Leary & Petchey (2009, _Journal of Animal Ecology_) using the framework we present above.
 
 ```{r}
 #rm(list = ls())
@@ -717,14 +717,151 @@ rK_vals <- rbind(r_vals, K_vals) %>%
 rm(r_vals, K_vals)
 ```
 
+The reanalysis is based on the range of the first derivatives and including information on whether those first derivatives span zero (and by how much).
+
 ```{r}
-rK_vals %>%
-ggplot(aes(x = temperature, y = value, col = species)) +
-  geom_point() +
-  geom_smooth() +
-  facet_wrap( ~ parameter, scales = "free", nrow = 2) 
+# get subsets of the data for measuring response diversity
+sp1_r<-rK_vals[rK_vals$species %in% 'tetrahymena' & rK_vals$parameter %in% 'r',]
+sp2_r<-rK_vals[rK_vals$species %in% 'loxocephallus' & rK_vals$parameter %in% 'r',]
+sp3_r<-rK_vals[rK_vals$species %in% 'colpidium' & rK_vals$parameter %in% 'r',]
+sp4_r<-rK_vals[rK_vals$species %in% 'paramecium' & rK_vals$parameter %in% 'r',]
+sp1_K<-rK_vals[rK_vals$species %in% 'tetrahymena' & rK_vals$parameter %in% 'log10_K',]
+sp2_K<-rK_vals[rK_vals$species %in% 'loxocephallus' & rK_vals$parameter %in% 'log10_K',]
+sp3_K<-rK_vals[rK_vals$species %in% 'colpidium' & rK_vals$parameter %in% 'log10_K',]
+sp4_K<-rK_vals[rK_vals$species %in% 'paramecium' & rK_vals$parameter %in% 'log10_K',]
+
+# using k=5 to avoid the error when the predictor variable has fewer levels than k in model spec. <https://stackoverflow.com/a/62914481>, but maybe Dave's markdown will have a better solution (I have limited experience with GAMs ~Sam)
+m1_r<-gam(data = sp1_r,value~s(temperature,k=5))
+m2_r<-gam(data = sp2_r,value~s(temperature,k=5))
+m3_r<-gam(data = sp3_r,value~s(temperature,k=5))
+m4_r<-gam(data = sp4_r,value~s(temperature,k=5))
+m1_K<-gam(data = sp1_K,value~s(temperature,k=5))
+m2_K<-gam(data = sp2_K,value~s(temperature,k=5))
+m3_K<-gam(data = sp3_K,value~s(temperature,k=5))
+m4_K<-gam(data = sp4_K,value~s(temperature,k=5))
+
+# get first derivatives
+d1_r<-derivatives(m1_r)
+d2_r<-derivatives(m2_r)
+d3_r<-derivatives(m3_r)
+d4_r<-derivatives(m4_r)
+d1_K<-derivatives(m1_K)
+d2_K<-derivatives(m2_K)
+d3_K<-derivatives(m3_K)
+d4_K<-derivatives(m4_K)
+
+# calculate response diversity for intrinsic rate of increase (r)
+rdiv_r<-data.frame('temperature' = d1_r$data, 'tetrahymena' = d1_r$derivative, 'loxocephallus' = d2_r$derivative, 'colpidium' = d3_r$derivative, 'paramecium' = d4_r$derivative)
+rdiv_r$rdiv<-apply(rdiv_r[,c(2:5)], 1, resp_div, stat = "range", sign_sens = F)
+rdiv_r$sign<-apply(rdiv_r[,c(2:5)], 1, resp_div, stat = "range", sign_sens = T)
+rdiv_r$Med<-median(rdiv_r$rdiv)
+
+# calculate response diversity for carrying capacity (K)
+rdiv_K<-data.frame('temperature' = d1_K$data, 'tetrahymena' = d1_K$derivative, 'loxocephallus' = d2_K$derivative, 'colpidium' = d3_K$derivative, 'paramecium' = d4_K$derivative)
+rdiv_K$rdiv<-apply(rdiv_K[,c(2:5)], 1, resp_div, stat = "range", sign_sens = F)
+rdiv_K$sign<-apply(rdiv_K[,c(2:5)], 1, resp_div, stat = "range", sign_sens = T)
+rdiv_K$Med<-median(rdiv_K$rdiv)
+
 ```
 
+We can then plot a figure similar to Figures 2 and 3, but instead based on the real data from Leary & Petchey (2009). This is Figure 4 (or Box Figure 1) from the manuscript.
+
+```{r}
+smax<-1;smin<-0
+
+# panel a
+Fig_4a<-ggplot(data = sp1_r,mapping = aes(x = temperature,y = value)) +
+              theme_classic(base_size = 14) + 
+              labs(x = "Temperature",y = "Intrinsic rate of increase (r)",tag = "a)") + 
+              geom_point(col = Isfahan1[[1]][5],size = 2,shape = 1) +
+              geom_point(aes(y = sp2_r$value),col = Isfahan1[[1]][4],size = 2,shape = 1) +
+              geom_point(aes(y = sp3_r$value),col = Isfahan1[[1]][3],size = 2,shape = 1) +
+              geom_point(aes(y = sp4_r$value),col = Isfahan1[[1]][2],size = 2,shape = 1) +
+              geom_smooth(col = Isfahan1[[1]][5]) + 
+              geom_smooth(aes(y = sp2_r$value),col = Isfahan1[[1]][4]) + 
+              geom_smooth(aes(y = sp3_r$value),col = Isfahan1[[1]][3]) + 
+              geom_smooth(aes(y = sp4_r$value),col = Isfahan1[[1]][2])
+
+# panel b
+Fig_4b<-ggplot(data = sp1_K,mapping = aes(x = temperature,y = value)) +
+              theme_classic(base_size = 14) + 
+              labs(x = "Temperature",y = "log10 carrying capacity (K)",tag = "b)") + 
+              geom_point(col = Isfahan1[[1]][5],size = 2,shape = 1) +
+              geom_point(aes(y = sp2_K$value),col = Isfahan1[[1]][4],size = 2,shape = 1) +
+              geom_point(aes(y = sp3_K$value),col = Isfahan1[[1]][3],size = 2,shape = 1) +
+              geom_point(aes(y = sp4_K$value),col = Isfahan1[[1]][2],size = 2,shape = 1) +
+              geom_smooth(col = Isfahan1[[1]][5]) + 
+              geom_smooth(aes(y = sp2_K$value),col = Isfahan1[[1]][4]) + 
+              geom_smooth(aes(y = sp3_K$value),col = Isfahan1[[1]][3]) + 
+              geom_smooth(aes(y = sp4_K$value),col = Isfahan1[[1]][2])
+
+# panel c
+Fig_4c<-ggplot(data = d1_r,mapping = aes(x = data,y = derivative)) +
+  theme_classic(base_size = 14) + 
+  labs(x = "Temperature",y = "Derivative (rate of increase)",tag = "c)") + 
+  geom_hline(yintercept = 0,
+             lty=2) +
+  geom_line(col = Isfahan1[[1]][5]) + 
+  geom_line(aes(y = d2_r$derivative),
+            col = Isfahan1[[1]][4]) + 
+  geom_line(aes(y = d3_r$derivative),
+            col = Isfahan1[[1]][3]) + 
+  geom_line(aes(y = d4_r$derivative),
+            col = Isfahan1[[1]][2])
+
+# panel d
+Fig_4d<-ggplot(data = d1_K,mapping = aes(x = data,y = derivative)) +
+  theme_classic(base_size = 14) + 
+  labs(x = "Temperature",y = "Derivative (carrying capacity)",tag = "d)") + 
+  geom_hline(yintercept = 0,
+             lty=2) +
+  geom_line(col = Isfahan1[[1]][5]) + 
+  geom_line(aes(y = d2_K$derivative),
+            col = Isfahan1[[1]][4]) + 
+  geom_line(aes(y = d3_K$derivative),
+            col = Isfahan1[[1]][3]) + 
+  geom_line(aes(y = d4_K$derivative),
+            col = Isfahan1[[1]][2])
+
+# panel e
+Fig_4ea<-ggplot(data = rdiv_r,mapping = aes(x = temperature,y = rdiv)) +
+  theme_classic(base_size = 14) + 
+  labs(x = NULL,y = "Range (derivatives)",tag = "e)") + 
+  geom_hline(yintercept = rdiv_r$Med,lty=2) +
+  geom_line() + 
+  geom_richtext(mapping = aes(x = 19,
+                              y = rdiv_r$Med+0.05),
+                size=4.5,
+                label.color = NA,
+                label = paste("RDiv^Med =",paste0(round(rdiv_r$Med,digits = 2))))
+Fig_4eb<-ggplot(data = rdiv_r,mapping = aes(x = temperature,y = sign)) +
+  theme_bw(base_size = 14)+
+  labs(x = "Temperature",y = "Sign") + 
+  geom_line() + 
+  lims(y = c(smin,smax))
+Fig_4eb<-Fig_4eb + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+# panel f
+Fig_4fa<-ggplot(data = rdiv_K,mapping = aes(x = temperature,y = rdiv)) +
+  theme_classic(base_size = 14) + 
+  labs(x = NULL,y = "Range (derivatives)",tag = "f)") + 
+  geom_hline(yintercept = rdiv_K$Med,lty=2) +
+  geom_line() + 
+  geom_richtext(mapping = aes(x = 19,
+                              y = rdiv_K$Med+0.05),
+                size=4.5,
+                label.color = NA,
+                label = paste("RDiv^Med =",paste0(round(rdiv_K$Med,digits = 2))))
+Fig_4fb<-ggplot(data = rdiv_K,mapping = aes(x = temperature,y = sign)) +
+  theme_bw(base_size = 14)+
+  labs(x = "Temperature",y = "Sign") + 
+  geom_line() + 
+  lims(y = c(smin,smax))
+Fig_4fb<-Fig_4fb + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+(Fig_4a + Fig_4b)/(Fig_4c + Fig_4d)/(Fig_4ea + Fig_4fa)/(Fig_4eb + Fig_4fb) + plot_layout(heights = c(3,3,3,1))
+
+```
 
 # Results of the systematic review
 
