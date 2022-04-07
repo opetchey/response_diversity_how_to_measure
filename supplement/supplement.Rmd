@@ -325,9 +325,10 @@ When species are added with identical responses to species already in the commun
 
 ```{r XXX16,  include=TRUE, fig.cap='(ref:XXX10)', fig.align="center", fig.height=4, fig.width=4}
 
-num_spp <- c(2, 4, 8, 16)
-redundant<-data.frame('S'=num_spp %>% rep(times=c(2,4,8,16)),'first_deriv_vals'=NA,'entropy'=NA)
-redundant$first_deriv_vals<-c(1,-1)
+num_spp <- c(2, 4, 8, 16,3)
+redundant<-data.frame('S'=num_spp %>% rep(times=c(2,4,8,16,3)),'first_deriv_vals'=NA,'entropy'=NA)
+redundant$first_deriv_vals[c(1:32)]<-c(1,-1)
+redundant$first_deriv_vals[33]<-1
 for(i in 1:length(redundant$S)){
   first_deriv_vals<-c(1,-1) %>% rep(redundant$S[i]*0.5)
   redundant$entropy[i]<-first_deriv_vals %>% resp_fd()
