@@ -210,8 +210,11 @@ summary_stats <- dd %>%
   group_by(num_spp, max_minus_min, mean) %>%
   summarise(range = resp_div(rd_vals, stat = rd_stat, sign_sens = FALSE),
             entropy = resp_fd(rd_vals),
-            sign_sensitive_range = resp_div(rd_vals, stat = rd_stat, sign_sens = TRUE)) %>%
-  pivot_longer(names_to = "variable", values_to = "value", 4:5)
+            sign_sensitive_entropy = (entropy - resp_fd(abs(rd_vals))) / entropy,
+            sign_sensitive_range = resp_div(rd_vals,
+                                            stat = rd_stat,
+                                            sign_sens = TRUE)) %>%
+  pivot_longer(names_to = "variable", values_to = "value", 4:7)
 
 ## wrangle the data for easier plotting
 all_data <- dd %>%
