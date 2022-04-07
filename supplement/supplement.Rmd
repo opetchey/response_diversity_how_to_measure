@@ -91,8 +91,6 @@ all_data <- dd %>%
 
 ## Communities varying only in spread
 
-
-
 (ref:XXX6) Communities varying only in the range of trait values. Trait values overlap zero. but the extent of overlap is constant, number of species is constant, and mean trait value is constant. Each column of dots corresponds to one community. Top panel shows the values of the first derivative of each of the species in the community. Bottom panel is the measure of overlap with zero.
 
 ```{r XXX6,  include=TRUE, fig.cap='(ref:XXX6)', fig.align="center", fig.height=4, fig.width=4}
@@ -150,9 +148,6 @@ all_data %>%
   xlab("Mean of first derivative values in community") 
 ```
 
-
-
-
 ## Communities varying in both spread and overlap
 
 (ref:XXX9) Communities varying both the range and the amount of overlap, but with constant mean trait value.
@@ -186,6 +181,165 @@ all_data %>%
          max_minus_min == this_max_minus_min,
          variable != "range") %>%
   ggplot(aes(x = num_spp, y = value)) +
+  geom_point() +
+  geom_hline(yintercept = 0, lty="dashed") +
+  facet_wrap( ~ variable, scales = "free_y", ncol = 1) +
+  xlab("Number of species") 
+```
+
+
+# Two dimensions of response diversity - Entropy
+
+The two dimensions (at least) of the response diversity of these values are:
+
+* The spread of the distribution. Here we use an entropy index based on hill numbers which can account for both the richness of the communities and their evenness in terms of their functional responses (their derivatives). See chapter 6 here for properties: <https://arxiv.org/pdf/2012.02113.pdf>.
+
+[I don't understand the maths well enough to fill in a meaningful formula here, so someone with a better grasp of hill numbers might want to expand on this...]
+
+* To quantify the overlap with zero, we use  $\frac{abs( abs(max(x_i)) - abs(min(x_i)) ) - range(x_i) }{ range(x_i)}$. This quantity is zero when there is no overlap with zero, and is 1 when $min(x_i) = -max(x_i)$. 
+
+
+```{r}
+## Set which measure of response diversity used
+rd_stat <- "range"
+```
+
+```{r}
+## calculate the diversity metrics
+summary_stats <- dd %>%
+  group_by(num_spp, max_minus_min, mean) %>%
+  summarise(range = resp_div(rd_vals, stat = rd_stat, sign_sens = FALSE),
+            entropy = resp_fd(rd_vals),
+            sign_sensitive_range = resp_div(rd_vals, stat = rd_stat, sign_sens = TRUE)) %>%
+  pivot_longer(names_to = "variable", values_to = "value", 4:5)
+
+## wrangle the data for easier plotting
+all_data <- dd %>%
+  mutate(variable = "first_deriv_vals",
+         value = rd_vals) %>%
+  select(-rd_vals) %>%
+  bind_rows(summary_stats) %>%
+  mutate(variable = as_factor(variable))
+```
+
+## Communities varying only in spread
+
+(ref:XXX11) Communities varying only in the range of trait values. Trait values overlap zero. but the extent of overlap is constant, number of species is constant, and mean trait value is constant. Each column of dots corresponds to one community. Top panel shows the values of the first derivative of each of the species in the community. Bottom panel is the measure of entropy.
+
+```{r XXX11,  include=TRUE, fig.cap='(ref:XXX6)', fig.align="center", fig.height=4, fig.width=4}
+this_mean <- 0
+this_num_spp <- 8
+all_data %>%
+  filter(mean == this_mean,
+         num_spp == this_num_spp,
+         variable != "range") %>%
+  ggplot(aes(x = max_minus_min, y = value)) +
+  geom_point() +
+  geom_hline(yintercept = 0, lty="dashed") +
+  facet_wrap( ~ variable, scales = "free_y", ncol = 1) +
+  xlab("Range of first derivative values in community") 
+
+```
+
+(ref:XXX12) Communities varying only in the range of trait values, with no overlap of trait values with zero. Extent of overlap of trait values with zero is constant, number of species is constant and mean trait value is constant. All else is as in the previous figure.
+
+```{r XXX12,  include=TRUE, fig.cap='(ref:XXX7)', fig.align="center", fig.height=4, fig.width=4}
+this_mean <- 2.5
+this_num_spp <- 8
+all_data %>%
+  filter(mean == this_mean,
+         num_spp == this_num_spp,
+         max_minus_min < 5,
+         variable != "range") %>%
+  ggplot(aes(x = max_minus_min, y = value)) +
+  geom_point() +
+  geom_hline(yintercept = 0, lty="dashed") +
+  facet_wrap( ~ variable, scales = "free_y", ncol = 1) +
+  xlab("Range of first derivative values in community")
+```
+
+## Communities varying only in overlap
+
+Here we look at communities that only vary in the overlap of trait values with zero, and that do not differ in range. The measure of the overlap with zero is zero while there is not overlap, then increases to a maximum when the mean is zero, and then decreases again (Fig. \@ref(fig:XXX8).
+
+(ref:XXX13) Communities varying only in the mean trait value, but not in range of trait values or the number of species.
+
+```{r XXX13,  include=TRUE, fig.cap='(ref:XXX8)', fig.align="center", fig.height=4, fig.width=4}
+this_max_minus_min <- 5.455
+this_num_spp <- 8
+all_data %>%
+  filter(max_minus_min == this_max_minus_min,
+         num_spp == this_num_spp,
+         variable != "range") %>%
+  ggplot(aes(x = mean, y = value)) +
+  geom_point() +
+  geom_hline(yintercept = 0, lty="dashed") +
+  facet_wrap( ~ variable, scales = "free_y", ncol = 1) +
+  xlab("Mean of first derivative values in community") 
+```
+
+## Communities varying in both spread and overlap
+
+(ref:XXX14) Communities varying both the range and the amount of overlap, but with constant mean trait value.
+
+```{r XXX14,  include=TRUE, fig.cap='(ref:XXX9)', fig.align="center", fig.height=4, fig.width=4}
+this_mean <- 2.5
+this_num_spp <- 8
+all_data %>%
+  filter(mean == this_mean,
+         num_spp == this_num_spp,
+         variable != "range") %>%
+  ggplot(aes(x = max_minus_min, y = value)) +
+  geom_point() +
+  geom_hline(yintercept = 0, lty="dashed") +
+  facet_wrap( ~ variable, scales = "free_y", ncol = 1) +
+  xlab("Range of first derivative values in community")
+```
+
+## Varying number of species
+
+When only number of species varies, entropy increases.
+
+(ref:XXX15) Communities with different numbers of species, but same range of trait values, same amount of overlap with zero, and same mean trait values.
+
+```{r XXX15,  include=TRUE, fig.cap='(ref:XXX10)', fig.align="center", fig.height=4, fig.width=4}
+this_mean <- 0
+this_num_spp <- 8
+this_max_minus_min <- 5.455
+all_data %>%
+  filter(mean == this_mean,
+         max_minus_min == this_max_minus_min,
+         variable != "range") %>%
+  ggplot(aes(x = num_spp, y = value)) +
+  geom_point() +
+  geom_hline(yintercept = 0, lty="dashed") +
+  facet_wrap( ~ variable, scales = "free_y", ncol = 1) +
+  xlab("Number of species") 
+```
+
+## Redundant species additions
+
+When species are added with identical responses to species already in the community, entropy does not change.That is, redundancy does not inflate response diversity (another desirable property)
+
+(ref:XXX16) Communities with different numbers of species, but identical trait values.
+
+```{r XXX16,  include=TRUE, fig.cap='(ref:XXX10)', fig.align="center", fig.height=4, fig.width=4}
+
+num_spp <- c(2, 4, 8, 16)
+redundant<-data.frame('S'=num_spp %>% rep(times=c(2,4,8,16)),'first_deriv_vals'=NA,'entropy'=NA)
+redundant$first_deriv_vals<-c(1,-1)
+for(i in 1:length(redundant$S)){
+  first_deriv_vals<-c(1,-1) %>% rep(redundant$S[i]*0.5)
+  redundant$entropy[i]<-first_deriv_vals %>% resp_fd()
+}
+
+redundant<-redundant %>%
+  pivot_longer(names_to = "variable", values_to = "value", 2:3)
+redundant$variable<-redundant$variable %>% 
+  as.character() %>% parse_factor(levels = c('first_deriv_vals','entropy'))
+
+redundant %>%
+  ggplot(aes(x = S, y = value)) +
   geom_point() +
   geom_hline(yintercept = 0, lty="dashed") +
   facet_wrap( ~ variable, scales = "free_y", ncol = 1) +
