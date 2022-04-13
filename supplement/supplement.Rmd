@@ -62,7 +62,7 @@ The two dimensions (at least) of the response diversity of these values are:
 
 [I don't understand the maths well enough to fill in a meaningful formula here, so someone with a better grasp of hill numbers might want to expand on this...]
 
-* To quantify the overlap with zero, we use  $\frac{abs( abs(max(x_i)) - abs(min(x_i)) ) - range(x_i) }{ range(x_i)}$. This quantity is zero when there is no overlap with zero, and is 1 when $min(x_i) = -max(x_i)$. 
+* To quantify the overlap with zero, we use  $\frac{range(x_i) - abs( abs(max(x_i)) - abs(min(x_i)) )   }{ range(x_i)}$. This quantity is zero when there is no overlap with zero, and is 1 when $min(x_i) = -max(x_i)$. 
 
 
 ```{r}
