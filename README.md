@@ -1,6 +1,6 @@
 # response_diversity_how_to_measure
 
-I suggest that we work towards a supplementary information report that is created with Rmarkdown. I also strongly suggest we work towards an html format report, rather than pdf, because there is much less typesetting work to do with an html format.
+Supplementary information report and data for the manuscript "How to measure response diversity", by Samuel RP-J Ross, Owen L Petchey, Takehiro Sasaki, and David W Armitage.
 
 Folders in this repository:
 
