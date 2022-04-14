@@ -32,9 +32,13 @@ source(here("r/our_functions.r"))
 
 ```
 
+1. Samuel R.P-J. Ross (Corresponding author), Integrative Community Ecology Unit, Okinawa Institute of Science & Technology Graduate University, Okinawa, Japan. E: s.ross.res[at]outlook.com
+
 # Introduction
 
-To be written.
+This is the supplementary information accompanying the manuscript, *How to measure response diversity* by Samuel R.P-J. Ross, Owen L. Petchey, Takehiro Sasaki, and David W. Armitage. 
+
+The purpose of this document is to demonstrate how to measure the two dimensions of response diversity we propose in the manuscript, and their behavioural properties under a range of conditions (Section 2). We then apply these measures to a range of simulated examples (Section 3), and a reanalysis of a previous response diversity study using real data (Section 4). Finally, we provide description of data format for the results from our systematic review, and call those results (though they are also provided as a .csv file).
 
 # Two dimensions of response diversity
 
@@ -58,18 +62,17 @@ dd <- crossing(num_spp,
 
 The two dimensions (at least) of the response diversity of these values are:
 
-* The spread of the distribution. Here we use an entropy index based on hill numbers which can account for both the richness of the communities and their evenness in terms of their functional responses (their derivatives). See chapter 6 here for properties: <https://arxiv.org/pdf/2012.02113.pdf>.
-
-[I don't understand the maths well enough to fill in a meaningful formula here, so someone with a better grasp of hill numbers might want to expand on this...]
+* To capture the range and spread of the data, we use a similarity-based diversity estimator described in detail in (Leinster & Cobbold 2012, _Ecology_, *93*, 477-489). Mathematically, the similarity-based diversity of order $q$, $^qD^Z(p)$,is calculated as $^qD^Z(p)=(\sum p_i(Zp)^{q-1}_i)^{\frac{1}{1-q}}$, where the exponent $q$ defines the relative weighting of richness and evenness as is typical of Hill numbers. Here, $q$ is fixed at zero, making diversity equivalent to species richness when $Z=I$.The vector $p$ contains the relative abundances for each species from $1 \dots S$, and $Z$ is an $S \times S$ matrix encoding the similarity between the $i^{th}$ and $j^{th}$ species. Therefore, $(Zp)_i=\sum^S_{j=1}Z_{ij}p_j$. We can use the diversity, $^qD^Z(p)$, as a metric capturing information on both richness and similarity in species’ responses (see Leinster & Cobbold 2012). There are many ways to calculate similarity, but here we use $Z_{ij}=e^{-d_{ij}}$, where $d_{ij}$ are the pairwise Euclidean distances (that is, dissimilarity) in performance-environment responses between two species. Thus, values of $Z_{ij}$ can range from $0$ as $d_{ij} \to \infty$ to $1$ when $d_{ij}=0$. Further, cases where $q \to 1$ and $q \to \infty$ are defined as $^1D^Z(p)=[(Zp)^{p_1}_1(Zp)^{p2}_1 \dots (Zp)^{p_S}_S]^{-1}$ and $^{\infty}D^Z(p)=max(Zp)_i ^{-1}$, respectively.
 
 * To quantify the overlap with zero, we use  $\frac{range(x_i) - abs( abs(max(x_i)) - abs(min(x_i)) )   }{ range(x_i)}$. This quantity is zero when there is no overlap with zero, and is 1 when $min(x_i) = -max(x_i)$. 
 
+We now demonstrate the properties of these indices under a range of conditions.
 
 ```{r}
 ## calculate the diversity metrics
 summary_stats <- dd %>%
   group_by(num_spp, max_minus_min, mean) %>%
-  summarise(entropy = resp_div(rd_vals,sign_sens = FALSE),
+  summarise(dissimilarity = resp_div(rd_vals,sign_sens = FALSE),
             sign_sensitive_range = resp_div(rd_vals,sign_sens = TRUE)) %>%
   pivot_longer(names_to = "variable", values_to = "value", 4:5)
 
@@ -84,7 +87,7 @@ all_data <- dd %>%
 
 ## Communities varying only in spread
 
-(ref:XXX1) Communities varying only in the range of trait values. Trait values overlap zero. but the extent of overlap is constant, number of species is constant, and mean trait value is constant. Each column of dots corresponds to one community. Top panel shows the values of the first derivative of each of the species in the community. Middle panel is the measure of entropy. Bottom panel is the measure of sign sensitivity.
+(ref:XXX1) Communities varying only in the range of trait values. Trait values overlap zero. but the extent of overlap is constant, number of species is constant, and mean trait value is constant. Each column of dots corresponds to one community. Top panel shows the values of the first derivative of each of the species in the community. Middle panel is the measure of dissimilarity. Bottom panel is the measure of sign sensitivity.
 
 ```{r XXX1,  include=TRUE, fig.cap='(ref:XXX1)', fig.align="center", fig.height=4, fig.width=4}
 this_mean <- 0
@@ -154,7 +157,7 @@ all_data %>%
 
 ## Varying number of species
 
-When only number of species varies, entropy increases.
+When only number of species varies, dissimilarity increases.
 
 (ref:XXX5) Communities with different numbers of species, but same range of trait values, same amount of overlap with zero, and same mean trait values.
 
@@ -174,26 +177,26 @@ all_data %>%
 
 ## Redundant species additions
 
-When species are added with identical responses to species already in the community, entropy does not change.That is, redundancy does not inflate response diversity (another desirable property)
+When species are added with identical responses to species already in the community, dissimilarity does not change.That is, redundancy does not inflate response diversity (another desirable property)
 
 (ref:XXX6) Communities with different numbers of species, but identical trait values.
 
 ```{r XXX6,  include=TRUE, fig.cap='(ref:XXX6)', fig.align="center", fig.height=4, fig.width=4}
 
 num_spp <- c(2, 4, 8, 16,3)
-redundant<-data.frame('S'=num_spp %>% rep(times=c(2,4,8,16,3)),'first_deriv_vals'=NA,'entropy'=NA,'sign_sensitive_range'=NA)
+redundant<-data.frame('S'=num_spp %>% rep(times=c(2,4,8,16,3)),'first_deriv_vals'=NA,'dissimilarity'=NA,'sign_sensitive_range'=NA)
 redundant$first_deriv_vals[c(1:32)]<-c(1,-1)
 redundant$first_deriv_vals[33]<-1
 for(i in 1:length(redundant$S)){
   first_deriv_vals<-c(1,-1) %>% rep(redundant$S[i]*0.5)
-  redundant$entropy[i]<-first_deriv_vals %>% resp_div(sign_sens = F)
+  redundant$dissimilarity[i]<-first_deriv_vals %>% resp_div(sign_sens = F)
   redundant$sign_sensitive_range[i]<-first_deriv_vals %>% resp_div(sign_sens = T)
 }
 
 redundant<-redundant %>%
   pivot_longer(names_to = "variable", values_to = "value", 2:4)
 redundant$variable<-redundant$variable %>% 
-  as.character() %>% parse_factor(levels = c('first_deriv_vals','entropy','sign_sensitive_range'))
+  as.character() %>% parse_factor(levels = c('first_deriv_vals','dissimilarity','sign_sensitive_range'))
 
 redundant %>%
   ggplot(aes(x = S, y = value)) +
@@ -382,7 +385,7 @@ Fig_2f<-ggplot(data = NULL,mapping = aes(x = d1c$data,y = d1c$derivative)) +
 # panel g
 Fig_2ga<-ggplot(data = rdiv_a,mapping = aes(x = data,y = rdiv)) +
   theme_classic(base_size = 14) + 
-  labs(x = NULL,y = "Entropy (derivatives)",tag = "g)") + 
+  labs(x = NULL,y = "dissimilarity (derivatives)",tag = "g)") + 
   geom_hline(yintercept = rdiv_a$Med,lty=2) +
   geom_line() + 
   geom_richtext(mapping = aes(x = 0.85,
@@ -401,7 +404,7 @@ Fig_2gb<-Fig_2gb + theme(panel.grid.major = element_blank(), panel.grid.minor = 
 # panel h
 Fig_2ha<-ggplot(data = rdiv_b,mapping = aes(x = data,y = rdiv)) +
   theme_classic(base_size = 14) + 
-  labs(x = NULL,y = "Entropy (derivatives)",tag = "h)") + 
+  labs(x = NULL,y = "dissimilarity (derivatives)",tag = "h)") + 
   geom_hline(yintercept = rdiv_b$Med,lty=2) +
   geom_line() + 
   geom_richtext(mapping = aes(x = 0.85,
@@ -420,7 +423,7 @@ Fig_2hb<-Fig_2hb + theme(panel.grid.major = element_blank(), panel.grid.minor = 
 # panel i
 Fig_2ia<-ggplot(data = rdiv_c,mapping = aes(x = data,y = rdiv)) +
   theme_classic(base_size = 14) + 
-  labs(x = NULL,y = "Entropy (derivatives)",tag = "i)") + 
+  labs(x = NULL,y = "dissimilarity (derivatives)",tag = "i)") + 
   geom_hline(yintercept = rdiv_c$Med,lty=2) +
   geom_line() + 
   geom_richtext(mapping = aes(x = 0.85,
@@ -530,7 +533,7 @@ Fig_3f<-ggplot(data = NULL,mapping = aes(x = d1f$data,y = d1f$derivative)) +
 # panel g
 Fig_3ga<-ggplot(data = rdiv_d,mapping = aes(x = data,y = rdiv)) +
   theme_classic(base_size = 14) + 
-  labs(x = NULL,y = "Entropy (derivatives)",tag = "g)") + 
+  labs(x = NULL,y = "dissimilarity (derivatives)",tag = "g)") + 
   geom_hline(yintercept = rdiv_d$Med,lty=2) +
   geom_line() + 
   geom_richtext(mapping = aes(x = 0.85,
@@ -549,7 +552,7 @@ Fig_3gb<-Fig_3gb + theme(panel.grid.major = element_blank(), panel.grid.minor = 
 # panel h
 Fig_3ha<-ggplot(data = rdiv_e,mapping = aes(x = data,y = rdiv)) +
   theme_classic(base_size = 14) + 
-  labs(x = NULL,y = "Entropy (derivatives)",tag = "h)") + 
+  labs(x = NULL,y = "dissimilarity (derivatives)",tag = "h)") + 
   geom_hline(yintercept = rdiv_e$Med,lty=2) +
   geom_line() + 
   geom_richtext(mapping = aes(x = 0.85,
@@ -568,7 +571,7 @@ Fig_3hb<-Fig_3hb + theme(panel.grid.major = element_blank(), panel.grid.minor = 
 # panel i
 Fig_3ia<-ggplot(data = rdiv_f,mapping = aes(x = data,y = rdiv)) +
   theme_classic(base_size = 14) + 
-  labs(x = NULL,y = "Entropy (derivatives)",tag = "i)") + 
+  labs(x = NULL,y = "dissimilarity (derivatives)",tag = "i)") + 
   geom_hline(yintercept = rdiv_f$Med,lty=2) +
   geom_line() + 
   geom_richtext(mapping = aes(x = 0.85,
@@ -616,7 +619,7 @@ sp2_K<-rK_vals[rK_vals$species %in% 'loxocephallus' & rK_vals$parameter %in% 'lo
 sp3_K<-rK_vals[rK_vals$species %in% 'colpidium' & rK_vals$parameter %in% 'log10_K',]
 sp4_K<-rK_vals[rK_vals$species %in% 'paramecium' & rK_vals$parameter %in% 'log10_K',]
 
-# using k=5 to avoid the error when the predictor variable has fewer levels than k in model spec. <https://stackoverflow.com/a/62914481>, but maybe Dave's markdown will have a better solution (I have limited experience with GAMs ~Sam)
+# using k=5 to avoid the error when the predictor variable has fewer levels than k in model spec. <https://stackoverflow.com/a/62914481>
 m1_r<-gam(data = sp1_r,value~s(temperature,k=5))
 m2_r<-gam(data = sp2_r,value~s(temperature,k=5))
 m3_r<-gam(data = sp3_r,value~s(temperature,k=5))
@@ -712,7 +715,7 @@ Fig_4d<-ggplot(data = d1_K,mapping = aes(x = data,y = derivative)) +
 # panel e
 Fig_4ea<-ggplot(data = rdiv_r,mapping = aes(x = temperature,y = rdiv)) +
   theme_classic(base_size = 14) + 
-  labs(x = NULL,y = "Entropy (derivatives)",tag = "e)") + 
+  labs(x = NULL,y = "dissimilarity (derivatives)",tag = "e)") + 
   geom_hline(yintercept = rdiv_r$Med,lty=2) +
   geom_line() + 
   geom_richtext(mapping = aes(x = 19,
@@ -730,7 +733,7 @@ Fig_4eb<-Fig_4eb + theme(panel.grid.major = element_blank(), panel.grid.minor = 
 # panel f
 Fig_4fa<-ggplot(data = rdiv_K,mapping = aes(x = temperature,y = rdiv)) +
   theme_classic(base_size = 14) + 
-  labs(x = NULL,y = "Entropy (derivatives)",tag = "f)") + 
+  labs(x = NULL,y = "dissimilarity (derivatives)",tag = "f)") + 
   geom_hline(yintercept = rdiv_K$Med,lty=2) +
   geom_line() + 
   geom_richtext(mapping = aes(x = 19,
@@ -769,7 +772,7 @@ Here are the results from the systematic review conducted by Samuel RP-J Ross in
 *DOI* = Digital object identifier (DOI) of article. 
 *Empirical_study* = Does the study use empirical data? 1 = yes, 0 = no, 0.5 = sort of (Theory papers etc.).
 *Measures_RD* = Does the empirical (or theoretical) study measure response diversity? 1 = yes, 0 = no, 0.5 = sort of.
-*RD_traits* = For papers that measure response diversity, do they measure functional response trait diversity? 0 = no, 0.5 = sort of, FDis = yes, using Functional Dispersion, RaoQ = yes, using Rao's Quadratic Entropy.
+*RD_traits* = For papers that measure response diversity, do they measure functional response trait diversity? 0 = no, 0.5 = sort of, FDis = yes, using Functional Dispersion, RaoQ = yes, using Rao's Quadratic dissimilarity.
 *RD_Int_term* = For papers that measure response diversity, do they measure an interaction term between species responding to an environmental variable? 0 = no, 0.5 = sort of, 1 = yes.
 *RD_Other* = For papers that measure response diversity, do they take another approach (i.e. not traits or interaction terms)? 0 = no, 1 = yes. 
 *Method_Description* = Short written description to help clarify method (see individual articles for more details).
