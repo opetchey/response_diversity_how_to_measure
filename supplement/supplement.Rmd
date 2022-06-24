@@ -8,6 +8,7 @@ output:
     toc_float:
       collapsed: true
       smooth_scroll: true
+    code_folding: hide
 ---
 
 ```{r include = FALSE, echo = FALSE}
@@ -15,7 +16,7 @@ knitr::opts_chunk$set(include = TRUE,
                       warning = FALSE,
                       message = FALSE,
                       cache = FALSE,
-                      echo = FALSE)
+                      echo = TRUE)
 ```
 
 ```{r}
@@ -595,6 +596,8 @@ Fig_3ib<-Fig_3ib + theme(panel.grid.major = element_blank(), panel.grid.minor = 
 
 This section reanalyses the data from Leary & Petchey (2009, _Journal of Animal Ecology_) using the framework we present above.
 
+## Calculating response diversity
+
 ```{r}
 #rm(list = ls())
 r_vals <- read_csv(here("data/Leary_and_Petchey_r_values.csv")) %>%
@@ -605,6 +608,7 @@ rK_vals <- rbind(r_vals, K_vals) %>%
   rename(value = x)
 rm(r_vals, K_vals)
 ```
+
 
 The reanalysis is based on the range of the first derivatives and including information on whether those first derivatives span zero (and by how much).
 
@@ -629,15 +633,19 @@ m2_K<-gam(data = sp2_K,value~s(temperature,k=5))
 m3_K<-gam(data = sp3_K,value~s(temperature,k=5))
 m4_K<-gam(data = sp4_K,value~s(temperature,k=5))
 
+## predict
+new_data <- data.frame(temperature = seq(18, 26, by= 0.02))
+p1_K <- predict(m1_K, newdata = new_data)
+
 # get first derivatives
-d1_r<-derivatives(m1_r)
-d2_r<-derivatives(m2_r)
-d3_r<-derivatives(m3_r)
-d4_r<-derivatives(m4_r)
-d1_K<-derivatives(m1_K)
-d2_K<-derivatives(m2_K)
-d3_K<-derivatives(m3_K)
-d4_K<-derivatives(m4_K)
+d1_r<-derivatives(m1_r, newdata = new_data)
+d2_r<-derivatives(m2_r, newdata = new_data)
+d3_r<-derivatives(m3_r, newdata = new_data)
+d4_r<-derivatives(m4_r, newdata = new_data)
+d1_K<-derivatives(m1_K, newdata = new_data)
+d2_K<-derivatives(m2_K, newdata = new_data)
+d3_K<-derivatives(m3_K, newdata = new_data)
+d4_K<-derivatives(m4_K, newdata = new_data)
 
 # calculate response diversity for intrinsic rate of increase (r)
 rdiv_r<-data.frame('temperature' = d1_r$data, 'tetrahymena' = d1_r$derivative, 'loxocephallus' = d2_r$derivative, 'colpidium' = d3_r$derivative, 'paramecium' = d4_r$derivative)
@@ -678,7 +686,7 @@ Fig_4b<-ggplot(data = sp1_K,mapping = aes(x = temperature,y = value)) +
               geom_point(col = Isfahan1[[1]][5],size = 2,shape = 1) +
               geom_point(aes(y = sp2_K$value),col = Isfahan1[[1]][4],size = 2,shape = 1) +
               geom_point(aes(y = sp3_K$value),col = Isfahan1[[1]][3],size = 2,shape = 1) +
-              geom_point(aes(y = sp4_K$value),col = Isfahan1[[1]][2],size = 2,shape = 1) +
+              geom_point(aes(y = sp4_K$value),col = Isfahan1[[1]][2],size = 2,shape = 1) 
               geom_smooth(col = Isfahan1[[1]][5]) + 
               geom_smooth(aes(y = sp2_K$value),col = Isfahan1[[1]][4]) + 
               geom_smooth(aes(y = sp3_K$value),col = Isfahan1[[1]][3]) + 
@@ -751,6 +759,102 @@ Fig_4fb<-Fig_4fb + theme(panel.grid.major = element_blank(), panel.grid.minor = 
 (Fig_4a + Fig_4b)/(Fig_4c + Fig_4d)/(Fig_4ea + Fig_4fa)/(Fig_4eb + Fig_4fb) + plot_layout(heights = c(3,3,3,1))
 
 ```
+
+## Comparing with community stability
+
+```{r}
+## read in the community level data
+comm_stats <- read_csv(here("data/leary_community_stats.csv")) %>%
+  mutate(temperature_midpoint = (max_temperature + min_temperature)/2)
+
+```
+
+Get the derivative based response diversity
+```{r}
+## Get the derivative based response diversity
+comm_div1 <- comm_stats %>%
+  select(microcosm_ID, species1, species2, temperature = temperature_midpoint) %>%
+  pivot_longer(names_to = "junk", values_to = "species", 2:3) %>%
+  select(-junk) %>%
+  rowwise() %>%
+  mutate(temperature = list(seq(temperature-2, temperature+2, 0.02))) %>%
+  unnest(cols = c(temperature)) %>%
+  mutate(temperature = as.character(temperature))
+  
+rdiv <- rdiv_r %>%
+  select(-rdiv, -sign, -Med) %>% 
+  pivot_longer(names_to = "species", values_to = "derivative", 2:5) %>%
+  mutate(temperature = as.character(temperature)) %>%
+  right_join(comm_div1) %>%
+  mutate(temperature = as.numeric(temperature)) %>%
+  group_by(microcosm_ID, temperature) %>%
+  summarise(r_dissimilarity = resp_div(derivative,sign_sens = FALSE),
+            r_sign_sensitive_range = resp_div(derivative,sign_sens = TRUE)) %>%
+  group_by(microcosm_ID) %>%
+  summarise(r_dissimilarity = mean(r_dissimilarity),
+            r_sign_sensitive_range = mean(r_sign_sensitive_range),
+            temperature = mean(temperature))
+
+Kdiv <- rdiv_K %>%
+  select(-rdiv, -sign, -Med) %>% 
+  pivot_longer(names_to = "species", values_to = "derivative", 2:5) %>%
+  mutate(temperature = as.character(temperature)) %>%
+  right_join(comm_div1) %>%
+  mutate(temperature = as.numeric(temperature)) %>%
+  group_by(microcosm_ID, temperature) %>%
+  summarise(K_dissimilarity = resp_div(derivative,sign_sens = FALSE),
+            K_sign_sensitive_range = resp_div(derivative,sign_sens = TRUE)) %>%
+  group_by(microcosm_ID) %>%
+  summarise(K_dissimilarity = mean(K_dissimilarity),
+            K_sign_sensitive_range = mean(K_sign_sensitive_range),
+            temperature = mean(temperature))
+
+
+## and merge all community level data
+comm_data <- comm_stats %>%
+  rename(temperature=temperature_midpoint) %>%
+  full_join(rdiv) %>%
+  full_join(Kdiv)
+
+```
+
+```{r, eval = FALSE}
+ggplot(comm_data) +
+  geom_point(aes(x = r_cor, y=r_dissimilarity))
+ggplot(comm_data) +
+  geom_point(aes(x = r_cor, y=r_sign_sensitive_range))
+ggplot(comm_data) +
+  geom_point(aes(x = k_cor, y=K_dissimilarity))
+ggplot(comm_data) +
+  geom_point(aes(x = k_cor, y=K_sign_sensitive_range, col = composition_code,
+                 shape = as.factor(temperature)))
+
+```
+
+
+```{r}
+## check some of the positive correlations but sign difference
+## K, 24, LT. Correlation is about 0.5, sign sens is about 0.18
+## plot the rs
+LT_24_K <- K_vals %>%
+  filter(temperature < 23, species %in% c("loxocephallus", "tetrahymena")) %>%
+  select(-jar) %>%
+  pivot_wider(names_from = species, values_from = x)
+ggplot(LT_24_K) +
+  geom_point(aes(x = tetrahymena, y = loxocephallus))
+cor(LT_24_K$tetrahymena, LT_24_K$loxocephallus)  
+  
+LT_24_r <- r_vals %>%
+  filter(temperature < 23, species %in% c("loxocephallus", "tetrahymena")) %>%
+  select(-jar) %>%
+  pivot_wider(names_from = species, values_from = x)
+ggplot(LT_24_r) +
+  geom_point(aes(x = tetrahymena, y = loxocephallus))
+cor(LT_24_r$tetrahymena, LT_24_r$loxocephallus)  
+ 
+
+```
+
 
 # Results of the systematic review
 
