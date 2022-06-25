@@ -599,6 +599,21 @@ This section reanalyses the data from Leary & Petchey (2009, _Journal of Animal 
 ## Calculating response diversity
 
 ```{r}
+rm(list = ls())
+library(tidyverse)
+library(patchwork)
+library(ggtext)
+library(mgcv)
+library(gratia)
+library(hypervolume)
+library(here)
+
+source(here("r/our_functions.r"))
+```
+
+
+
+```{r}
 #rm(list = ls())
 r_vals <- read_csv(here("data/Leary_and_Petchey_r_values.csv")) %>%
   mutate(parameter = "r")
@@ -606,7 +621,7 @@ K_vals <- read_csv(here("data/Leary_and_Petchey_K_values.csv")) %>%
   mutate(x = log10(x), parameter = "log10_K")
 rK_vals <- rbind(r_vals, K_vals) %>%
   rename(value = x)
-rm(r_vals, K_vals)
+#rm(r_vals, K_vals)
 ```
 
 
@@ -769,9 +784,10 @@ comm_stats <- read_csv(here("data/leary_community_stats.csv")) %>%
 
 ```
 
-Get the derivative based response diversity
+Get the derivative based response diversity for each of the two species communities at each temperature range. Done by calculating response diversity at each temperature within a range, and then taking the average.
+
 ```{r}
-## Get the derivative based response diversity
+## prepare a data frame to put the derivatives into
 comm_div1 <- comm_stats %>%
   select(microcosm_ID, species1, species2, temperature = temperature_midpoint) %>%
   pivot_longer(names_to = "junk", values_to = "species", 2:3) %>%
@@ -781,6 +797,8 @@ comm_div1 <- comm_stats %>%
   unnest(cols = c(temperature)) %>%
   mutate(temperature = as.character(temperature))
   
+## put the r derivatives into the above data frame and calculate the
+## derivative based response diversities
 rdiv <- rdiv_r %>%
   select(-rdiv, -sign, -Med) %>% 
   pivot_longer(names_to = "species", values_to = "derivative", 2:5) %>%
@@ -795,6 +813,8 @@ rdiv <- rdiv_r %>%
             r_sign_sensitive_range = mean(r_sign_sensitive_range),
             temperature = mean(temperature))
 
+## put the K derivatives into the above data frame and calculate the
+## derivative based response diversities
 Kdiv <- rdiv_K %>%
   select(-rdiv, -sign, -Med) %>% 
   pivot_longer(names_to = "species", values_to = "derivative", 2:5) %>%
@@ -809,7 +829,6 @@ Kdiv <- rdiv_K %>%
             K_sign_sensitive_range = mean(K_sign_sensitive_range),
             temperature = mean(temperature))
 
-
 ## and merge all community level data
 comm_data <- comm_stats %>%
   rename(temperature=temperature_midpoint) %>%
@@ -819,6 +838,7 @@ comm_data <- comm_stats %>%
 ```
 
 ```{r, eval = FALSE}
+## Have a look at relationships between correlation based measures and derivative based measures:
 ggplot(comm_data) +
   geom_point(aes(x = r_cor, y=r_dissimilarity))
 ggplot(comm_data) +
@@ -831,28 +851,35 @@ ggplot(comm_data) +
 
 ```
 
-
-```{r}
+```{r eval = FALSE}
 ## check some of the positive correlations but sign difference
 ## K, 24, LT. Correlation is about 0.5, sign sens is about 0.18
 ## plot the rs
 LT_24_K <- K_vals %>%
-  filter(temperature < 23, species %in% c("loxocephallus", "tetrahymena")) %>%
-  select(-jar) %>%
+  group_by(species, temperature) %>%
+  summarise(x = mean(x)) %>%
+  filter(temperature > 20 , species %in% c("loxocephallus", "tetrahymena")) %>%
+  #select(-jar) %>%
   pivot_wider(names_from = species, values_from = x)
 ggplot(LT_24_K) +
-  geom_point(aes(x = tetrahymena, y = loxocephallus))
-cor(LT_24_K$tetrahymena, LT_24_K$loxocephallus)  
+  geom_point(aes(x = tetrahymena, y = loxocephallus, col = temperature))
+cor(LT_24_K$tetrahymena, LT_24_K$loxocephallus) ## not exactly the same as in Leary and Petchey (i.e. in comm_stats), but this is because Leary and Petchey used a specific method for calculating the correlations, which is not the same as this method.
+
+## E.g. Petchey & Leary calculated a correlation for every possible pairing of the jars, and took the mean of that. And for carrying capacity, correlations were calculated on the raw biomass, and not the log10 biomass
   
 LT_24_r <- r_vals %>%
-  filter(temperature < 23, species %in% c("loxocephallus", "tetrahymena")) %>%
+  filter(temperature > 20, species %in% c("loxocephallus", "tetrahymena")) %>%
   select(-jar) %>%
   pivot_wider(names_from = species, values_from = x)
 ggplot(LT_24_r) +
   geom_point(aes(x = tetrahymena, y = loxocephallus))
-cor(LT_24_r$tetrahymena, LT_24_r$loxocephallus)  
- 
+cor(LT_24_r$tetrahymena, LT_24_r$loxocephallus) 
+```
 
+Ready to use 'comm_data' to calculate correlations between response diversity measures and stability (and perhaps covariance)!!!
+
+```{r}
+comm_data
 ```
 
 
