@@ -650,6 +650,8 @@ m4_K<-gam(data = sp4_K,value~s(temperature,k=5))
 
 ## predict
 new_data <- data.frame(temperature = seq(18, 26, by= 0.02))
+#new_data <- data.frame(temperature = seq(18, 26, by= 1))
+
 p1_K <- predict(m1_K, newdata = new_data)
 
 # get first derivatives
@@ -663,13 +665,20 @@ d3_K<-derivatives(m3_K, newdata = new_data)
 d4_K<-derivatives(m4_K, newdata = new_data)
 
 # calculate response diversity for intrinsic rate of increase (r)
-rdiv_r<-data.frame('temperature' = d1_r$data, 'tetrahymena' = d1_r$derivative, 'loxocephallus' = d2_r$derivative, 'colpidium' = d3_r$derivative, 'paramecium' = d4_r$derivative)
+rdiv_r<-data.frame('temperature' = d1_r$data,
+                   'tetrahymena' = d1_r$derivative,
+                   'loxocephallus' = d2_r$derivative,
+                   'colpidium' = d3_r$derivative, 'paramecium' = d4_r$derivative)
 rdiv_r$rdiv<-apply(rdiv_r[,c(2:5)], 1, resp_div, sign_sens = F)
 rdiv_r$sign<-apply(rdiv_r[,c(2:5)], 1, resp_div, sign_sens = T)
 rdiv_r$Med<-median(rdiv_r$rdiv)
 
 # calculate response diversity for carrying capacity (K)
-rdiv_K<-data.frame('temperature' = d1_K$data, 'tetrahymena' = d1_K$derivative, 'loxocephallus' = d2_K$derivative, 'colpidium' = d3_K$derivative, 'paramecium' = d4_K$derivative)
+rdiv_K<-data.frame('temperature' = d1_K$data,
+                   'tetrahymena' = d1_K$derivative,
+                   'loxocephallus' = d2_K$derivative,
+                   'colpidium' = d3_K$derivative,
+                   'paramecium' = d4_K$derivative)
 rdiv_K$rdiv<-apply(rdiv_K[,c(2:5)], 1, resp_div, sign_sens = F)
 rdiv_K$sign<-apply(rdiv_K[,c(2:5)], 1, resp_div, sign_sens = T)
 rdiv_K$Med<-median(rdiv_K$rdiv)
@@ -892,79 +901,27 @@ Fig_4fb<-Fig_4fb + theme(panel.grid.major = element_blank(), panel.grid.minor = 
 
 ## Comparing with community stability
 
+Here we read in the data that was created in the benchmarking response diversity project.
+
 ```{r}
 ## read in the community level data
-comm_stats <- read_csv(here("data/leary_community_stats.csv")) %>%
-  mutate(temperature_midpoint = (max_temperature + min_temperature)/2)
-
-```
-
-Get the derivative based response diversity for each of the two species communities at each temperature range. Done by calculating response diversity at each temperature within a range, and then taking the average.
-
-```{r}
-## prepare a data frame to put the derivatives into
-comm_div1 <- comm_stats %>%
-  select(microcosm_ID, species1, species2, temperature = temperature_midpoint) %>%
-  pivot_longer(names_to = "junk", values_to = "species", 2:3) %>%
-  select(-junk) %>%
-  rowwise() %>%
-  mutate(temperature = list(seq(temperature-2, temperature+2, 0.02))) %>%
-  unnest(cols = c(temperature)) %>%
-  mutate(temperature = as.character(temperature))
-  
-## put the r derivatives into the above data frame and calculate the
-## derivative based response diversities
-rdiv <- rdiv_r %>%
-  select(-rdiv, -sign, -Med) %>% 
-  pivot_longer(names_to = "species", values_to = "derivative", 2:5) %>%
-  mutate(temperature = as.character(temperature)) %>%
-  right_join(comm_div1) %>%
-  mutate(temperature = as.numeric(temperature)) %>%
-  group_by(microcosm_ID, temperature) %>%
-  summarise(r_dissimilarity = resp_div(derivative,sign_sens = FALSE),
-            r_divergence = resp_div(derivative,sign_sens = TRUE)) %>%
-  group_by(microcosm_ID) %>%
-  summarise(r_dissimilarity = mean(r_dissimilarity),
-            r_divergence = mean(r_divergence),
-            temperature = mean(temperature))
-
-## put the K derivatives into the above data frame and calculate the
-## derivative based response diversities
-Kdiv <- rdiv_K %>%
-  select(-rdiv, -sign, -Med) %>% 
-  pivot_longer(names_to = "species", values_to = "derivative", 2:5) %>%
-  mutate(temperature = as.character(temperature)) %>%
-  right_join(comm_div1) %>%
-  mutate(temperature = as.numeric(temperature)) %>%
-  group_by(microcosm_ID, temperature) %>%
-  summarise(K_dissimilarity = resp_div(derivative,sign_sens = FALSE),
-            K_divergence = resp_div(derivative,sign_sens = TRUE)) %>%
-  group_by(microcosm_ID) %>%
-  summarise(K_dissimilarity = mean(K_dissimilarity),
-            K_divergence = mean(K_divergence),
-            temperature = mean(temperature))
-
-## and merge all community level data
-comm_data <- comm_stats %>%
-  rename(temperature=temperature_midpoint) %>%
-  full_join(rdiv) %>%
-  full_join(Kdiv)
-
+comm_data <- read_csv(here("data/all_comm_data.csv")) 
 ```
 
 ```{r, eval = FALSE}
 ## Have a look at relationships between correlation based measures and derivative based measures:
 ggplot(comm_data) +
-  geom_point(aes(x = r_cor, y=r_dissimilarity))
+  geom_point(aes(x = cor_respdiv, y=deriv_nss_respdiv,
+                 col = environment_values, shape = composition)) +
+  facet_wrap(vars(trait_name))
 ggplot(comm_data) +
-  geom_point(aes(x = r_cor, y=r_divergence))
-ggplot(comm_data) +
-  geom_point(aes(x = k_cor, y=K_dissimilarity))
-ggplot(comm_data) +
-  geom_point(aes(x = k_cor, y=K_divergence, col = composition_code,
-                 shape = as.factor(temperature)))
+  geom_point(aes(x = cor_respdiv, y=deriv_ss_respdiv,
+                 col = environment_values, shape = composition)) +
+  facet_wrap(vars(trait_name))
 
 ```
+
+I've looked at cases where the correlation based response diversity is either very positive or very negative, and the sign sensitive derivative is respectively either very high or very low (the opposite of what one would expect). I think this occurs mainly due to the correlation being calculated only over the temperature range experienced by the community, whereas the gam from which the derivatives are derived is fit to the envire temperature range, and then only the part of the fit for the temperature range experienced is used (even though that can be affected by the data points outside that range in the gam fit). So even before we calculate response diversity, we are making choices that affect the outcome (i.e. value of response diversity).
 
 ```{r eval = FALSE}
 ## check some of the positive correlations but sign difference
