@@ -39,7 +39,7 @@ source(here("r/our_functions.r"))
 
 This is the supplementary information accompanying the manuscript, *How to measure response diversity* by Samuel R.P-J. Ross, Owen L. Petchey, Takehiro Sasaki, and David W. Armitage. 
 
-The purpose of this document is to demonstrate how to measure the two dimensions of response diversity we propose in the manuscript, and their behavioural properties under a range of conditions (Section 2). We then apply these measures to a range of simulated examples (Section 3), and a reanalysis of a previous response diversity study using real data (Section 4). Finally, we provide description of data format for the results from our systematic review, and call those results (though they are also provided as a .csv file).
+The purpose of this document is to demonstrate how to measure the two dimensions of response diversity we propose in the manuscript, and their behavioural properties under a range of conditions (Section 2). We then apply these measures to a range of simulated examples (Section 3), and a reanalysis of a previous response diversity study using real data (Section 4). Finally, we provide description of data format for the results from our systematic review, and call those results (also provided as a .csv file).
 
 # Two dimensions of response diversity
 
@@ -74,7 +74,7 @@ We now demonstrate the properties of these indices under a range of conditions.
 summary_stats <- dd %>%
   group_by(num_spp, max_minus_min, mean) %>%
   summarise(dissimilarity = resp_div(rd_vals,sign_sens = FALSE),
-            sign_sensitive_range = resp_div(rd_vals,sign_sens = TRUE)) %>%
+            divergence = resp_div(rd_vals,sign_sens = TRUE)) %>%
   pivot_longer(names_to = "variable", values_to = "value", 4:5)
 
 ## wrangle the data for easier plotting
@@ -88,7 +88,7 @@ all_data <- dd %>%
 
 ## Communities varying only in spread
 
-(ref:XXX1) Communities varying only in the range of trait values. Trait values overlap zero. but the extent of overlap is constant, number of species is constant, and mean trait value is constant. Each column of dots corresponds to one community. Top panel shows the values of the first derivative of each of the species in the community. Middle panel is the measure of dissimilarity. Bottom panel is the measure of sign sensitivity.
+(ref:XXX1) Communities varying only in the range of trait values. Trait values overlap zero. but the extent of overlap is constant, number of species is constant, and mean trait value is constant. Each column of dots corresponds to one community. Top panel shows the values of the first derivative of each of the species in the community. Middle panel is the measure of dissimilarity. Bottom panel is the measure of divergence.
 
 ```{r XXX1,  include=TRUE, fig.cap='(ref:XXX1)', fig.align="center", fig.height=4, fig.width=4}
 this_mean <- 0
@@ -185,19 +185,19 @@ When species are added with identical responses to species already in the commun
 ```{r XXX6,  include=TRUE, fig.cap='(ref:XXX6)', fig.align="center", fig.height=4, fig.width=4}
 
 num_spp <- c(2, 4, 8, 16,3)
-redundant<-data.frame('S'=num_spp %>% rep(times=c(2,4,8,16,3)),'first_deriv_vals'=NA,'dissimilarity'=NA,'sign_sensitive_range'=NA)
+redundant<-data.frame('S'=num_spp %>% rep(times=c(2,4,8,16,3)),'first_deriv_vals'=NA,'dissimilarity'=NA,'divergence'=NA)
 redundant$first_deriv_vals[c(1:32)]<-c(1,-1)
 redundant$first_deriv_vals[33]<-1
 for(i in 1:length(redundant$S)){
   first_deriv_vals<-c(1,-1) %>% rep(redundant$S[i]*0.5)
   redundant$dissimilarity[i]<-first_deriv_vals %>% resp_div(sign_sens = F)
-  redundant$sign_sensitive_range[i]<-first_deriv_vals %>% resp_div(sign_sens = T)
+  redundant$divergence[i]<-first_deriv_vals %>% resp_div(sign_sens = T)
 }
 
 redundant<-redundant %>%
   pivot_longer(names_to = "variable", values_to = "value", 2:4)
 redundant$variable<-redundant$variable %>% 
-  as.character() %>% parse_factor(levels = c('first_deriv_vals','dissimilarity','sign_sensitive_range'))
+  as.character() %>% parse_factor(levels = c('first_deriv_vals','dissimilarity','divergence'))
 
 redundant %>%
   ggplot(aes(x = S, y = value)) +
@@ -397,7 +397,7 @@ Fig_2ga<-ggplot(data = rdiv_a,mapping = aes(x = data,y = rdiv)) +
   lims(y = c(rmin,rmax))
 Fig_2gb<-ggplot(data = rdiv_a,mapping = aes(x = data,y = sign)) +
   theme_bw(base_size = 14)+
-  labs(x = "Spring frost",y = "Sign") + 
+  labs(x = "Spring frost",y = "Divergence") + 
   geom_line() + 
   lims(y = c(smin,smax))
 Fig_2gb<-Fig_2gb + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -416,7 +416,7 @@ Fig_2ha<-ggplot(data = rdiv_b,mapping = aes(x = data,y = rdiv)) +
   lims(y = c(rmin,rmax))
 Fig_2hb<-ggplot(data = rdiv_b,mapping = aes(x = data,y = sign)) +
   theme_bw(base_size = 14)+
-  labs(x = "Urbanisation",y = "Sign") + 
+  labs(x = "Urbanisation",y = "Divergence") + 
   geom_line() + 
   lims(y = c(smin,smax))
 Fig_2hb<-Fig_2hb + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -435,7 +435,7 @@ Fig_2ia<-ggplot(data = rdiv_c,mapping = aes(x = data,y = rdiv)) +
   lims(y = c(rmin,rmax))
 Fig_2ib<-ggplot(data = rdiv_c,mapping = aes(x = data,y = sign)) +
   theme_bw(base_size = 14)+
-  labs(x = "Winter temperature",y = "Sign") + 
+  labs(x = "Winter temperature",y = "Divergence") + 
   geom_line() + 
   lims(y = c(smin,smax))
 Fig_2ib<-Fig_2ib + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -545,7 +545,7 @@ Fig_3ga<-ggplot(data = rdiv_d,mapping = aes(x = data,y = rdiv)) +
   lims(y = c(rmin,rmax))
 Fig_3gb<-ggplot(data = rdiv_d,mapping = aes(x = data,y = sign)) +
   theme_bw(base_size = 14)+
-  labs(x = "Flowering plant abundance",y = "Sign") + 
+  labs(x = "Flowering plant abundance",y = "Divergence") + 
   geom_line() + 
   lims(y = c(smin,smax))
 Fig_3gb<-Fig_3gb + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -564,7 +564,7 @@ Fig_3ha<-ggplot(data = rdiv_e,mapping = aes(x = data,y = rdiv)) +
   lims(y = c(rmin,rmax))
 Fig_3hb<-ggplot(data = rdiv_e,mapping = aes(x = data,y = sign)) +
   theme_bw(base_size = 14)+
-  labs(x = "Grazing pressure",y = "Sign") + 
+  labs(x = "Grazing pressure",y = "Divergence") + 
   geom_line() + 
   lims(y = c(smin,smax))
 Fig_3hb<-Fig_3hb + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -583,7 +583,7 @@ Fig_3ia<-ggplot(data = rdiv_f,mapping = aes(x = data,y = rdiv)) +
   lims(y = c(rmin,rmax))
 Fig_3ib<-ggplot(data = rdiv_f,mapping = aes(x = data,y = sign)) +
   theme_bw(base_size = 14)+
-  labs(x = "Fire frequency",y = "Sign") + 
+  labs(x = "Fire frequency",y = "Divergence") + 
   geom_line() + 
   lims(y = c(smin,smax))
 Fig_3ib<-Fig_3ib + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -676,36 +676,151 @@ rdiv_K$Med<-median(rdiv_K$rdiv)
 
 ```
 
+To plot the output of the gams, we'll use the predict function. This needs a new tibble with the output of predict: 
+
+```{r}
+
+# generate new tibble with data from predict() for plotting gams ## r
+gam_data_r <- tibble(temperature = seq(from=min(sp1_r$temperature),to=max(sp1_r$temperature),length.out = 1000)
+) %>% 
+  bind_cols(as_tibble(
+    predict(m1_r, newdata = ., se.fit=TRUE)
+  )) # get gam data
+colnames(gam_data_r)[c(2:3)]<-c("Sp1","Sp1_se") # rename to species 1
+
+temp<-tibble(temperature = seq(from=min(sp1_r$temperature),to=max(sp1_r$temperature),length.out = 1000)
+) %>% 
+  bind_cols(as_tibble(
+    predict(m2_r, newdata = ., se.fit=TRUE)
+  )) # get gam data
+colnames(temp)[c(2:3)]<-c("Sp2","Sp2_se") # rename to species 2
+gam_data_r<-gam_data_r %>% bind_cols(temp[c(2,3)]); rm(temp) # bind on sp 2 and remove temporary tibble
+
+temp<-tibble(temperature = seq(from=min(sp1_r$temperature),to=max(sp1_r$temperature),length.out = 1000)
+) %>% 
+  bind_cols(as_tibble(
+    predict(m3_r, newdata = ., se.fit=TRUE)
+  )) # get gam data
+colnames(temp)[c(2:3)]<-c("Sp3","Sp3_se") # rename to species 2
+gam_data_r<-gam_data_r %>% bind_cols(temp[c(2,3)]); rm(temp) # bind on sp 2 and remove temporary tibble
+
+temp<-tibble(temperature = seq(from=min(sp1_r$temperature),to=max(sp1_r$temperature),length.out = 1000)
+) %>% 
+  bind_cols(as_tibble(
+    predict(m4_r, newdata = ., se.fit=TRUE)
+  )) # get gam data
+colnames(temp)[c(2:3)]<-c("Sp4","Sp4_se") # rename to species 2
+gam_data_r<-gam_data_r %>% bind_cols(temp[c(2,3)]); rm(temp) # bind on sp 2 and remove temporary tibble
+
+# add cols for raw data from Leary & Petchey
+gam_data_r$sp1_raw<-NA
+gam_data_r$sp2_raw<-NA
+gam_data_r$sp3_raw<-NA
+gam_data_r$sp4_raw<-NA
+gam_data_r<-gam_data_r %>% bind_rows(as_tibble(
+  sp1_r %>% group_by(temperature) %>% summarise(sp1_raw = value)
+))
+sp2_r <- sp2_r %>% group_by(temperature) %>% summarise(value = value)
+sp3_r <- sp3_r %>% group_by(temperature) %>% summarise(value = value)
+sp4_r <- sp4_r %>% group_by(temperature) %>% summarise(value = value)
+for (i in 1:nrow(sp2_r)) {
+  gam_data_r$sp2_raw[1000+i]<-sp2_r$value[i]
+  gam_data_r$sp3_raw[1000+i]<-sp3_r$value[i]
+  gam_data_r$sp4_raw[1000+i]<-sp4_r$value[i]
+}
+
+# generate new tibble with data from predict() for plotting gams ## K
+gam_data_K <- tibble(temperature = seq(from=min(sp1_K$temperature),to=max(sp1_K$temperature),length.out = 1000)
+) %>% 
+  bind_cols(as_tibble(
+    predict(m1_K, newdata = ., se.fit=TRUE)
+  )) # get gam data
+colnames(gam_data_K)[c(2:3)]<-c("Sp1","Sp1_se") # rename to species 1
+
+temp<-tibble(temperature = seq(from=min(sp1_K$temperature),to=max(sp1_K$temperature),length.out = 1000)
+) %>% 
+  bind_cols(as_tibble(
+    predict(m2_K, newdata = ., se.fit=TRUE)
+  )) # get gam data
+colnames(temp)[c(2:3)]<-c("Sp2","Sp2_se") # rename to species 2
+gam_data_K<-gam_data_K %>% bind_cols(temp[c(2,3)]); rm(temp) # bind on sp 2 and remove temporary tibble
+
+temp<-tibble(temperature = seq(from=min(sp1_K$temperature),to=max(sp1_K$temperature),length.out = 1000)
+) %>% 
+  bind_cols(as_tibble(
+    predict(m3_K, newdata = ., se.fit=TRUE)
+  )) # get gam data
+colnames(temp)[c(2:3)]<-c("Sp3","Sp3_se") # rename to species 2
+gam_data_K<-gam_data_K %>% bind_cols(temp[c(2,3)]); rm(temp) # bind on sp 2 and remove temporary tibble
+
+temp<-tibble(temperature = seq(from=min(sp1_K$temperature),to=max(sp1_K$temperature),length.out = 1000)
+) %>% 
+  bind_cols(as_tibble(
+    predict(m4_K, newdata = ., se.fit=TRUE)
+  )) # get gam data
+colnames(temp)[c(2:3)]<-c("Sp4","Sp4_se") # rename to species 2
+gam_data_K<-gam_data_K %>% bind_cols(temp[c(2,3)]); rm(temp) # bind on sp 2 and remove temporary tibble
+
+# add cols for raw data from Leary & Petchey
+gam_data_K$sp1_raw<-NA
+gam_data_K$sp2_raw<-NA
+gam_data_K$sp3_raw<-NA
+gam_data_K$sp4_raw<-NA
+gam_data_K<-gam_data_K %>% bind_rows(as_tibble(
+  sp1_K %>% group_by(temperature) %>% summarise(sp1_raw = value)
+))
+sp2_K <- sp2_K %>% group_by(temperature) %>% summarise(value = value)
+sp3_K <- sp3_K %>% group_by(temperature) %>% summarise(value = value)
+sp4_K <- sp4_K %>% group_by(temperature) %>% summarise(value = value)
+for (i in 1:nrow(sp2_K)) {
+  gam_data_K$sp2_raw[1000+i]<-sp2_K$value[i]
+  gam_data_K$sp3_raw[1000+i]<-sp3_K$value[i]
+  gam_data_K$sp4_raw[1000+i]<-sp4_K$value[i]
+}
+
+```
+
+
 We can then plot a figure similar to Figures 2 and 3, but instead based on the real data from Leary & Petchey (2009). This is Figure 4 (or Box Figure 1) from the manuscript.
 
 ```{r}
 smax<-1;smin<-0
 
 # panel a
-Fig_4a<-ggplot(data = sp1_r,mapping = aes(x = temperature,y = value)) +
-              theme_classic(base_size = 14) + 
-              labs(x = "Temperature",y = "Intrinsic rate of increase (r)",tag = "a)") + 
-              geom_point(col = Isfahan1[[1]][5],size = 2,shape = 1) +
-              geom_point(aes(y = sp2_r$value),col = Isfahan1[[1]][4],size = 2,shape = 1) +
-              geom_point(aes(y = sp3_r$value),col = Isfahan1[[1]][3],size = 2,shape = 1) +
-              geom_point(aes(y = sp4_r$value),col = Isfahan1[[1]][2],size = 2,shape = 1) +
-              geom_smooth(col = Isfahan1[[1]][5]) + 
-              geom_smooth(aes(y = sp2_r$value),col = Isfahan1[[1]][4]) + 
-              geom_smooth(aes(y = sp3_r$value),col = Isfahan1[[1]][3]) + 
-              geom_smooth(aes(y = sp4_r$value),col = Isfahan1[[1]][2])
+Fig_4a<-gam_data_r %>% 
+  ggplot(aes(x=temperature, y=Sp1)) +
+  theme_classic(base_size = 14) + 
+  labs(x = "Temperature",y = "Intrinsic rate of increase (r)",tag = "a)") + 
+  geom_point(aes(y = sp1_raw),col = Isfahan1[[1]][5],size = 2,shape = 1) +
+  geom_point(aes(y = sp2_raw),col = Isfahan1[[1]][4],size = 2,shape = 1) +
+  geom_point(aes(y = sp3_raw),col = Isfahan1[[1]][3],size = 2,shape = 1) +
+  geom_point(aes(y = sp4_raw),col = Isfahan1[[1]][2],size = 2,shape = 1) +
+  geom_ribbon(aes(ymin=Sp1-Sp1_se, ymax=Sp1+Sp1_se),alpha=.2) +
+  geom_ribbon(aes(ymin=Sp2-Sp2_se, ymax=Sp2+Sp2_se),alpha=.2) +
+  geom_ribbon(aes(ymin=Sp3-Sp3_se, ymax=Sp3+Sp3_se),alpha=.2) +
+  geom_ribbon(aes(ymin=Sp4-Sp4_se, ymax=Sp4+Sp4_se),alpha=.2) +
+  geom_line(col = Isfahan1[[1]][5]) +
+  geom_line(aes(y = Sp2), col = Isfahan1[[1]][4]) +
+  geom_line(aes(y = Sp3), col = Isfahan1[[1]][3]) +
+  geom_line(aes(y = Sp4), col = Isfahan1[[1]][2])
 
 # panel b
-Fig_4b<-ggplot(data = sp1_K,mapping = aes(x = temperature,y = value)) +
-              theme_classic(base_size = 14) + 
-              labs(x = "Temperature",y = "log10 carrying capacity (K)",tag = "b)") + 
-              geom_point(col = Isfahan1[[1]][5],size = 2,shape = 1) +
-              geom_point(aes(y = sp2_K$value),col = Isfahan1[[1]][4],size = 2,shape = 1) +
-              geom_point(aes(y = sp3_K$value),col = Isfahan1[[1]][3],size = 2,shape = 1) +
-              geom_point(aes(y = sp4_K$value),col = Isfahan1[[1]][2],size = 2,shape = 1) 
-              geom_smooth(col = Isfahan1[[1]][5]) + 
-              geom_smooth(aes(y = sp2_K$value),col = Isfahan1[[1]][4]) + 
-              geom_smooth(aes(y = sp3_K$value),col = Isfahan1[[1]][3]) + 
-              geom_smooth(aes(y = sp4_K$value),col = Isfahan1[[1]][2])
+Fig_4b<-gam_data_K %>% 
+  ggplot(aes(x=temperature, y=Sp1)) +
+  theme_classic(base_size = 14) + 
+  labs(x = "Temperature",y = "log10 carrying capacity (K)",tag = "b)") + 
+  geom_point(aes(y = sp1_raw),col = Isfahan1[[1]][5],size = 2,shape = 1) +
+  geom_point(aes(y = sp2_raw),col = Isfahan1[[1]][4],size = 2,shape = 1) +
+  geom_point(aes(y = sp3_raw),col = Isfahan1[[1]][3],size = 2,shape = 1) +
+  geom_point(aes(y = sp4_raw),col = Isfahan1[[1]][2],size = 2,shape = 1) +
+  geom_ribbon(aes(ymin=Sp1-Sp1_se, ymax=Sp1+Sp1_se),alpha=.2) +
+  geom_ribbon(aes(ymin=Sp2-Sp2_se, ymax=Sp2+Sp2_se),alpha=.2) +
+  geom_ribbon(aes(ymin=Sp3-Sp3_se, ymax=Sp3+Sp3_se),alpha=.2) +
+  geom_ribbon(aes(ymin=Sp4-Sp4_se, ymax=Sp4+Sp4_se),alpha=.2) +
+  geom_line(col = Isfahan1[[1]][5]) +
+  geom_line(aes(y = Sp2), col = Isfahan1[[1]][4]) +
+  geom_line(aes(y = Sp3), col = Isfahan1[[1]][3]) +
+  geom_line(aes(y = Sp4), col = Isfahan1[[1]][2])
 
 # panel c
 Fig_4c<-ggplot(data = d1_r,mapping = aes(x = data,y = derivative)) +
@@ -748,7 +863,7 @@ Fig_4ea<-ggplot(data = rdiv_r,mapping = aes(x = temperature,y = rdiv)) +
                 label = paste("RDiv^Med =",paste0(round(rdiv_r$Med,digits = 2))))
 Fig_4eb<-ggplot(data = rdiv_r,mapping = aes(x = temperature,y = sign)) +
   theme_bw(base_size = 14)+
-  labs(x = "Temperature",y = "Sign") + 
+  labs(x = "Temperature",y = "Divergence") + 
   geom_line() + 
   lims(y = c(smin,smax))
 Fig_4eb<-Fig_4eb + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -766,7 +881,7 @@ Fig_4fa<-ggplot(data = rdiv_K,mapping = aes(x = temperature,y = rdiv)) +
                 label = paste("RDiv^Med =",paste0(round(rdiv_K$Med,digits = 2))))
 Fig_4fb<-ggplot(data = rdiv_K,mapping = aes(x = temperature,y = sign)) +
   theme_bw(base_size = 14)+
-  labs(x = "Temperature",y = "Sign") + 
+  labs(x = "Temperature",y = "Divergence") + 
   geom_line() + 
   lims(y = c(smin,smax))
 Fig_4fb<-Fig_4fb + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
@@ -807,10 +922,10 @@ rdiv <- rdiv_r %>%
   mutate(temperature = as.numeric(temperature)) %>%
   group_by(microcosm_ID, temperature) %>%
   summarise(r_dissimilarity = resp_div(derivative,sign_sens = FALSE),
-            r_sign_sensitive_range = resp_div(derivative,sign_sens = TRUE)) %>%
+            r_divergence = resp_div(derivative,sign_sens = TRUE)) %>%
   group_by(microcosm_ID) %>%
   summarise(r_dissimilarity = mean(r_dissimilarity),
-            r_sign_sensitive_range = mean(r_sign_sensitive_range),
+            r_divergence = mean(r_divergence),
             temperature = mean(temperature))
 
 ## put the K derivatives into the above data frame and calculate the
@@ -823,10 +938,10 @@ Kdiv <- rdiv_K %>%
   mutate(temperature = as.numeric(temperature)) %>%
   group_by(microcosm_ID, temperature) %>%
   summarise(K_dissimilarity = resp_div(derivative,sign_sens = FALSE),
-            K_sign_sensitive_range = resp_div(derivative,sign_sens = TRUE)) %>%
+            K_divergence = resp_div(derivative,sign_sens = TRUE)) %>%
   group_by(microcosm_ID) %>%
   summarise(K_dissimilarity = mean(K_dissimilarity),
-            K_sign_sensitive_range = mean(K_sign_sensitive_range),
+            K_divergence = mean(K_divergence),
             temperature = mean(temperature))
 
 ## and merge all community level data
@@ -842,18 +957,18 @@ comm_data <- comm_stats %>%
 ggplot(comm_data) +
   geom_point(aes(x = r_cor, y=r_dissimilarity))
 ggplot(comm_data) +
-  geom_point(aes(x = r_cor, y=r_sign_sensitive_range))
+  geom_point(aes(x = r_cor, y=r_divergence))
 ggplot(comm_data) +
   geom_point(aes(x = k_cor, y=K_dissimilarity))
 ggplot(comm_data) +
-  geom_point(aes(x = k_cor, y=K_sign_sensitive_range, col = composition_code,
+  geom_point(aes(x = k_cor, y=K_divergence, col = composition_code,
                  shape = as.factor(temperature)))
 
 ```
 
 ```{r eval = FALSE}
 ## check some of the positive correlations but sign difference
-## K, 24, LT. Correlation is about 0.5, sign sens is about 0.18
+## K, 24, LT. Correlation is about 0.5, divergence is about 0.18
 ## plot the rs
 LT_24_K <- K_vals %>%
   group_by(species, temperature) %>%
