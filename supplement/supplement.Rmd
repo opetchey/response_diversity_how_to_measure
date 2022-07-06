@@ -804,10 +804,10 @@ Fig_4a<-gam_data_r %>%
   geom_point(aes(y = sp2_raw),col = Isfahan1[[1]][4],size = 2,shape = 1) +
   geom_point(aes(y = sp3_raw),col = Isfahan1[[1]][3],size = 2,shape = 1) +
   geom_point(aes(y = sp4_raw),col = Isfahan1[[1]][2],size = 2,shape = 1) +
-  geom_ribbon(aes(ymin=Sp1-Sp1_se, ymax=Sp1+Sp1_se),alpha=.2) +
-  geom_ribbon(aes(ymin=Sp2-Sp2_se, ymax=Sp2+Sp2_se),alpha=.2) +
-  geom_ribbon(aes(ymin=Sp3-Sp3_se, ymax=Sp3+Sp3_se),alpha=.2) +
-  geom_ribbon(aes(ymin=Sp4-Sp4_se, ymax=Sp4+Sp4_se),alpha=.2) +
+  geom_ribbon(aes(ymin=Sp1-Sp1_se, ymax=Sp1+Sp1_se),alpha=.1) +
+  geom_ribbon(aes(ymin=Sp2-Sp2_se, ymax=Sp2+Sp2_se),alpha=.1) +
+  geom_ribbon(aes(ymin=Sp3-Sp3_se, ymax=Sp3+Sp3_se),alpha=.1) +
+  geom_ribbon(aes(ymin=Sp4-Sp4_se, ymax=Sp4+Sp4_se),alpha=.1) +
   geom_line(col = Isfahan1[[1]][5]) +
   geom_line(aes(y = Sp2), col = Isfahan1[[1]][4]) +
   geom_line(aes(y = Sp3), col = Isfahan1[[1]][3]) +
@@ -822,10 +822,10 @@ Fig_4b<-gam_data_K %>%
   geom_point(aes(y = sp2_raw),col = Isfahan1[[1]][4],size = 2,shape = 1) +
   geom_point(aes(y = sp3_raw),col = Isfahan1[[1]][3],size = 2,shape = 1) +
   geom_point(aes(y = sp4_raw),col = Isfahan1[[1]][2],size = 2,shape = 1) +
-  geom_ribbon(aes(ymin=Sp1-Sp1_se, ymax=Sp1+Sp1_se),alpha=.2) +
-  geom_ribbon(aes(ymin=Sp2-Sp2_se, ymax=Sp2+Sp2_se),alpha=.2) +
-  geom_ribbon(aes(ymin=Sp3-Sp3_se, ymax=Sp3+Sp3_se),alpha=.2) +
-  geom_ribbon(aes(ymin=Sp4-Sp4_se, ymax=Sp4+Sp4_se),alpha=.2) +
+  geom_ribbon(aes(ymin=Sp1-Sp1_se, ymax=Sp1+Sp1_se),alpha=.1) +
+  geom_ribbon(aes(ymin=Sp2-Sp2_se, ymax=Sp2+Sp2_se),alpha=.1) +
+  geom_ribbon(aes(ymin=Sp3-Sp3_se, ymax=Sp3+Sp3_se),alpha=.1) +
+  geom_ribbon(aes(ymin=Sp4-Sp4_se, ymax=Sp4+Sp4_se),alpha=.1) +
   geom_line(col = Isfahan1[[1]][5]) +
   geom_line(aes(y = Sp2), col = Isfahan1[[1]][4]) +
   geom_line(aes(y = Sp3), col = Isfahan1[[1]][3]) +
@@ -953,6 +953,207 @@ Ready to use 'comm_data' to calculate correlations between response diversity me
 ```{r}
 comm_data
 ```
+
+Simple correlations between CV (and COV) and response diversity, measured as the pairwise correlation (from Leary & Petchey), the dissimilarity, and the divergence (from this study). I thought the best way to compare would be to recreate the panels with the pairwise responses from Leary & Petchey (e.g., Figs. 4a, 4b, 4f, 4g) and compare with the metrics we propose. I used a simple pearson correlation, as I couldn't figure out exactly how the correlations were made in Leary & Petchey, but probably some fancier model might be better (maybe even nonlinear fits...). I included the result of the correlation as a footnote in each figure, labelled "Cor = X" where X is the Pearson Correlation coefficient. 
+
+```{r}
+
+# instrinsic growth rate (r) - CV
+comm_data_r<-comm_data %>%
+  filter(trait_name %in% "intrinsic growth rate")
+
+panel_A<-comm_data_r %>% 
+  ggplot() + 
+  theme_classic(base_size = 14) + 
+  labs(x = "Intrinsic growth rate correlation",y = "CV of population biomass",
+       tag = "a)",caption = str_c("Cor = ",cor(comm_data_r$cor_respdiv,comm_data_r$cv) %>% round(digits = 3))
+         ) + 
+  geom_smooth(aes(x = cor_respdiv, y=cv),
+              method = 'lm',col = 'black',alpha = 0.3) + 
+  geom_point(aes(x = cor_respdiv, y=cv,
+                 col = environment_values, shape = composition),size = 2, alpha = 0.75) +
+  scale_shape_manual(values = c(1:5)) +
+  scale_color_manual(values = Isfahan1[[1]][c(6,4,2)]) +
+  theme(legend.position = "none")
+
+panel_B<-comm_data_r %>% 
+  ggplot() + 
+  theme_classic(base_size = 14) + 
+  labs(x = "Intrinsic growth rate (dis)similarity",y = "CV of population biomass",
+       tag = "b)",caption = str_c("Cor = ",cor(comm_data_r$deriv_nss_respdiv,comm_data_r$cv) %>% round(digits = 3))
+         ) + 
+  geom_smooth(aes(x = deriv_nss_respdiv, y=cv),
+              method = 'lm',col = 'black',alpha = 0.3) + 
+  geom_point(aes(x = deriv_nss_respdiv, y=cv,
+                 col = environment_values, shape = composition),size = 2, alpha = 0.75) +
+  scale_shape_manual(values = c(1:5)) +
+  scale_color_manual(values = Isfahan1[[1]][c(6,4,2)]) +
+  theme(legend.position = "none")
+
+panel_C<-comm_data_r %>% 
+  ggplot() + 
+  theme_classic(base_size = 14) + 
+  labs(x = "Intrinsic growth rate divergence",y = "CV of population biomass",
+       tag = "c)",caption = str_c("Cor = ",cor(comm_data_r$deriv_ss_respdiv,comm_data_r$cv) %>% round(digits = 3))
+         ) + 
+  geom_smooth(aes(x = deriv_ss_respdiv, y=cv),
+              method = 'lm',col = 'black',alpha = 0.3) + 
+  geom_point(aes(x = deriv_ss_respdiv, y=cv,
+                 col = environment_values, shape = composition),size = 2, alpha = 0.75) +
+  scale_shape_manual(values = c(1:5)) +
+  scale_color_manual(values = Isfahan1[[1]][c(6,4,2)]) +
+  theme(legend.position = "none")
+
+
+# carrying capacity (K) - CV
+comm_data_K<-comm_data %>%
+  filter(trait_name %in% "carrying capacity")
+
+panel_D<-comm_data_K %>% 
+  ggplot() + 
+  theme_classic(base_size = 14) + 
+  labs(x = "Carrying capacity correlation",y = "CV of population biomass",
+       tag = "d)",caption = str_c("Cor = ",cor(comm_data_K$cor_respdiv,comm_data_K$cv) %>% round(digits = 3))
+         ) + 
+  geom_smooth(aes(x = cor_respdiv, y=cv),
+              method = 'lm',col = 'black',alpha = 0.3) + 
+  geom_point(aes(x = cor_respdiv, y=cv,
+                 col = environment_values, shape = composition),size = 2, alpha = 0.75) +
+  scale_shape_manual(values = c(1:5)) +
+  scale_color_manual(values = Isfahan1[[1]][c(6,4,2)]) +
+  theme(legend.position = "none")
+
+panel_E<-comm_data_K %>% 
+  ggplot() + 
+  theme_classic(base_size = 14) + 
+  labs(x = "Carrying capacity (dis)similarity",y = "CV of population biomass",
+       tag = "e)",caption = str_c("Cor = ",cor(comm_data_K$deriv_nss_respdiv,comm_data_K$cv) %>% round(digits = 3))
+         ) + 
+  geom_smooth(aes(x = deriv_nss_respdiv, y=cv),
+              method = 'lm',col = 'black',alpha = 0.3) + 
+  geom_point(aes(x = deriv_nss_respdiv, y=cv,
+                 col = environment_values, shape = composition),size = 2, alpha = 0.75) +
+  scale_shape_manual(values = c(1:5)) +
+  scale_color_manual(values = Isfahan1[[1]][c(6,4,2)]) +
+  theme(legend.position = "none")
+
+panel_F<-comm_data_K %>% 
+  ggplot() + 
+  theme_classic(base_size = 14) + 
+  labs(x = "Carrying capacity divergence",y = "CV of population biomass",
+       tag = "f)",caption = str_c("Cor = ",cor(comm_data_K$deriv_ss_respdiv,comm_data_K$cv) %>% round(digits = 3))
+         ) + 
+  geom_smooth(aes(x = deriv_ss_respdiv, y=cv),
+              method = 'lm',col = 'black',alpha = 0.3) + 
+  geom_point(aes(x = deriv_ss_respdiv, y=cv,
+                 col = environment_values, shape = composition),size = 2, alpha = 0.75) +
+  scale_shape_manual(values = c(1:5)) +
+  scale_color_manual(values = Isfahan1[[1]][c(6,4,2)]) 
+
+(panel_A + panel_B + panel_C)/(panel_D + panel_E + panel_F)
+
+
+# instrinsic growth rate (r) - COV
+comm_data_r<-comm_data %>%
+  filter(trait_name %in% "intrinsic growth rate")
+
+panel_A<-comm_data_r %>% 
+  ggplot() + 
+  theme_classic(base_size = 14) + 
+  labs(x = "Intrinsic growth rate correlation",y = "Summed covariances",
+       tag = "a)",caption = str_c("Cor = ",cor(comm_data_r$cor_respdiv,comm_data_r$cov) %>% round(digits = 3))
+         ) + 
+  geom_smooth(aes(x = cor_respdiv, y=cov),
+              method = 'lm',col = 'black',alpha = 0.3) + 
+  geom_point(aes(x = cor_respdiv, y=cov,
+                 col = environment_values, shape = composition),size = 2, alpha = 0.75) +
+  scale_shape_manual(values = c(1:5)) +
+  scale_color_manual(values = Isfahan1[[1]][c(6,4,2)]) +
+  theme(legend.position = "none")
+
+panel_B<-comm_data_r %>% 
+  ggplot() + 
+  theme_classic(base_size = 14) + 
+  labs(x = "Intrinsic growth rate (dis)similarity",y = "Summed covariances",
+       tag = "b)",caption = str_c("Cor = ",cor(comm_data_r$deriv_nss_respdiv,comm_data_r$cov) %>% round(digits = 3))
+         ) + 
+  geom_smooth(aes(x = deriv_nss_respdiv, y=cov),
+              method = 'lm',col = 'black',alpha = 0.3) + 
+  geom_point(aes(x = deriv_nss_respdiv, y=cov,
+                 col = environment_values, shape = composition),size = 2, alpha = 0.75) +
+  scale_shape_manual(values = c(1:5)) +
+  scale_color_manual(values = Isfahan1[[1]][c(6,4,2)]) +
+  theme(legend.position = "none")
+
+panel_C<-comm_data_r %>% 
+  ggplot() + 
+  theme_classic(base_size = 14) + 
+  labs(x = "Intrinsic growth rate divergence",y = "Summed covariances",
+       tag = "c)",caption = str_c("Cor = ",cor(comm_data_r$deriv_ss_respdiv,comm_data_r$cov) %>% round(digits = 3))
+         ) + 
+  geom_smooth(aes(x = deriv_ss_respdiv, y=cov),
+              method = 'lm',col = 'black',alpha = 0.3) + 
+  geom_point(aes(x = deriv_ss_respdiv, y=cov,
+                 col = environment_values, shape = composition),size = 2, alpha = 0.75) +
+  scale_shape_manual(values = c(1:5)) +
+  scale_color_manual(values = Isfahan1[[1]][c(6,4,2)]) +
+  theme(legend.position = "none")
+
+
+# carrying capacity (K) - COV
+comm_data_K<-comm_data %>%
+  filter(trait_name %in% "carrying capacity")
+
+panel_D<-comm_data_K %>% 
+  ggplot() + 
+  theme_classic(base_size = 14) + 
+  labs(x = "Carrying capacity correlation",y = "Summed covariances",
+       tag = "d)",caption = str_c("Cor = ",cor(comm_data_K$cor_respdiv,comm_data_K$cov) %>% round(digits = 3))
+         ) + 
+  geom_smooth(aes(x = cor_respdiv, y=cov),
+              method = 'lm',col = 'black',alpha = 0.3) + 
+  geom_point(aes(x = cor_respdiv, y=cov,
+                 col = environment_values, shape = composition),size = 2, alpha = 0.75) +
+  scale_shape_manual(values = c(1:5)) +
+  scale_color_manual(values = Isfahan1[[1]][c(6,4,2)]) +
+  theme(legend.position = "none")
+
+panel_E<-comm_data_K %>% 
+  ggplot() + 
+  theme_classic(base_size = 14) + 
+  labs(x = "Carrying capacity (dis)similarity",y = "Summed covariances",
+       tag = "e)",caption = str_c("Cor = ",cor(comm_data_K$deriv_nss_respdiv,comm_data_K$cov) %>% round(digits = 3))
+         ) + 
+  geom_smooth(aes(x = deriv_nss_respdiv, y=cov),
+              method = 'lm',col = 'black',alpha = 0.3) + 
+  geom_point(aes(x = deriv_nss_respdiv, y=cov,
+                 col = environment_values, shape = composition),size = 2, alpha = 0.75) +
+  scale_shape_manual(values = c(1:5)) +
+  scale_color_manual(values = Isfahan1[[1]][c(6,4,2)]) +
+  theme(legend.position = "none")
+
+panel_F<-comm_data_K %>% 
+  ggplot() + 
+  theme_classic(base_size = 14) + 
+  labs(x = "Carrying capacity divergence",y = "Summed covariances",
+       tag = "f)",caption = str_c("Cor = ",cor(comm_data_K$deriv_ss_respdiv,comm_data_K$cov) %>% round(digits = 3))
+         ) + 
+  geom_smooth(aes(x = deriv_ss_respdiv, y=cov),
+              method = 'lm',col = 'black',alpha = 0.3) + 
+  geom_point(aes(x = deriv_ss_respdiv, y=cov,
+                 col = environment_values, shape = composition),size = 2, alpha = 0.75) +
+  scale_shape_manual(values = c(1:5)) +
+  scale_color_manual(values = Isfahan1[[1]][c(6,4,2)]) 
+
+(panel_A + panel_B + panel_C)/(panel_D + panel_E + panel_F)
+
+```
+
+
+
+
+
+
 
 
 # Results of the systematic review
