@@ -899,7 +899,7 @@ Fig_4fb<-Fig_4fb + theme(panel.grid.major = element_blank(), panel.grid.minor = 
 
 ```
 
-## Comparing with community stability
+## Comparing response diversity measures
 
 Here we read in the data that was created in the benchmarking response diversity project.
 
@@ -948,17 +948,20 @@ ggplot(LT_24_r) +
 cor(LT_24_r$tetrahymena, LT_24_r$loxocephallus) 
 ```
 
+
+## Does response diversity predict community stability?
+
 Ready to use 'comm_data' to calculate correlations between response diversity measures and stability (and perhaps covariance)!!!
 
 ```{r}
-comm_data
+#comm_data
 ```
 
-Simple correlations between CV (and COV) and response diversity, measured as the pairwise correlation (from Leary & Petchey), the dissimilarity, and the divergence (from this study). I thought the best way to compare would be to recreate the panels with the pairwise responses from Leary & Petchey (e.g., Figs. 4a, 4b, 4f, 4g) and compare with the metrics we propose. I used a simple pearson correlation, as I couldn't figure out exactly how the correlations were made in Leary & Petchey, but probably some fancier model might be better (maybe even nonlinear fits...). I included the result of the correlation as a footnote in each figure, labelled "Cor = X" where X is the Pearson Correlation coefficient. 
+Simple correlations between CV (and COV) and response diversity (measured as the pairwise correlation, similar to in Leary & Petchey 2009), the dissimilarity (from this study), and the divergence (from this study). I thought the best way to compare would be to recreate the panels with the pairwise responses from Leary & Petchey (e.g., Figs. 4a, 4b, 4f, 4g) and compare with the metrics we propose. I used a simple pearson correlation, as I couldn't figure out exactly how the correlations were made in Leary & Petchey, but probably some fancier model might be better (maybe even nonlinear fits...). I included the result of the correlation as a footnote in each figure, labelled "Cor = X" where X is the Pearson Correlation coefficient. 
 
 ```{r}
 
-# instrinsic growth rate (r) - CV
+# instrinsic growth rate (r) - CV   -----
 comm_data_r<-comm_data %>%
   filter(trait_name %in% "intrinsic growth rate")
 
@@ -1005,7 +1008,7 @@ panel_C<-comm_data_r %>%
   theme(legend.position = "none")
 
 
-# carrying capacity (K) - CV
+# carrying capacity (K) - CV -----
 comm_data_K<-comm_data %>%
   filter(trait_name %in% "carrying capacity")
 
@@ -1053,7 +1056,7 @@ panel_F<-comm_data_K %>%
 (panel_A + panel_B + panel_C)/(panel_D + panel_E + panel_F)
 
 
-# instrinsic growth rate (r) - COV
+# instrinsic growth rate (r) - COV ---------
 comm_data_r<-comm_data %>%
   filter(trait_name %in% "intrinsic growth rate")
 
@@ -1100,7 +1103,7 @@ panel_C<-comm_data_r %>%
   theme(legend.position = "none")
 
 
-# carrying capacity (K) - COV
+# carrying capacity (K) - COV -----------
 comm_data_K<-comm_data %>%
   filter(trait_name %in% "carrying capacity")
 
@@ -1149,9 +1152,48 @@ panel_F<-comm_data_K %>%
 
 ```
 
+Next we calculate the slope (with confidence intervals) of the relationship between community stability and the various measures of response diversity and display the results in a coefficients plot.
 
+```{r}
+comm_data_long <- comm_data %>%
+  ## make long, so that models of all combinations of
+  ## response and explanatory models can be easily run
+  pivot_longer(names_to = "resp_div_name", values_to = "resp_div_value",
+               5:7) %>%
+  pivot_longer(names_to = "community_variable_name", values_to = "community_variable_value",
+               5:10) %>%
+  ## scale the explanatory variables so model coefficients are more comparable
+  group_by(study_name, resp_div_name) %>%
+  mutate(resp_div_value_scaled = scale(resp_div_value)) %>%
+  ungroup()
+  
+  
+mods <- comm_data_long %>%
+  nest_by(study_name, trait_name, environment_name,
+          resp_div_name, community_variable_name) %>%
+  mutate(models = list(broom::tidy(lm(community_variable_value ~ resp_div_value_scaled,
+                              data = data), conf.int = TRUE))) %>%
+  select(-data) %>%
+  unnest(cols="models")
 
+study_oi <- "Leary and Petchey 2009"
+coef_plot <- mods %>%
+  filter(study_name == study_oi,
+         term == "resp_div_value_scaled",
+         community_variable_name == "cv") %>%
+  ggplot(aes(x = resp_div_name, y = estimate)) +
+  geom_point() +
+  geom_pointrange(aes(ymin = conf.low, ymax = conf.high))+
+  labs(title = paste0(study_oi)) +
+  xlab("Measure of response diversity") +
+  ylab("Slope of relationship between\ncommunity stability (CV)\nand response diversity.") +
+  facet_grid(cols = vars(trait_name),
+             rows = vars(study_name))
+coef_plot
 
+```
+
+The model (linear regression) is rather crude (a more sophisticated could account for some of the dependencies among observations). Nevertheless, the point is to show that this approach can be used to assess the performance of different measures of response diversity, and different traits used as the basis of the measure. In this example, response diversity calculated with the intrinsic growth rate trait and as the sign sensitive amount of variation in the derivative has the strongest relationship with community stability, and is the only relationship with confidence interval not overlapping zero.
 
 
 
