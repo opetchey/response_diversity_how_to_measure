@@ -921,7 +921,7 @@ ggplot(comm_data) +
 
 ```
 
-I've looked at cases where the correlation based response diversity is either very positive or very negative, and the sign sensitive derivative is respectively either very high or very low (the opposite of what one would expect). I think this occurs mainly due to the correlation being calculated only over the temperature range experienced by the community, whereas the gam from which the derivatives are derived is fit to the envire temperature range, and then only the part of the fit for the temperature range experienced is used (even though that can be affected by the data points outside that range in the gam fit). So even before we calculate response diversity, we are making choices that affect the outcome (i.e. value of response diversity).
+We've looked at cases where the correlation based response diversity is either very positive or very negative, and the sign sensitive derivative is respectively either very high or very low (the opposite of what one would expect). We think this occurs mainly due to the correlation being calculated only over the temperature range experienced by the community, whereas the gam from which the derivatives are derived is fit to the entire temperature range, and then only the part of the fit for the temperature range experienced is used (even though that can be affected by the data points outside that range in the gam fit). So even before we calculate response diversity, we are making choices that affect the outcome (i.e. value of response diversity).
 
 ```{r eval = FALSE}
 ## check some of the positive correlations but sign difference
@@ -951,10 +951,10 @@ cor(LT_24_r$tetrahymena, LT_24_r$loxocephallus)
 
 ## Does response diversity predict community stability?
 
-Ready to use 'comm_data' to calculate correlations between response diversity measures and stability (and perhaps covariance)!!!
+Ready to use 'comm_data' to calculate correlations between response diversity measures and stability (and perhaps covariance)!
 
 ```{r}
-#comm_data
+comm_data %>% glimpse()
 ```
 
 Simple correlations between CV (and COV) and response diversity (measured as the pairwise correlation, similar to in Leary & Petchey 2009), the dissimilarity (from this study), and the divergence (from this study). I thought the best way to compare would be to recreate the panels with the pairwise responses from Leary & Petchey (e.g., Figs. 4a, 4b, 4f, 4g) and compare with the metrics we propose. I used a simple pearson correlation, as I couldn't figure out exactly how the correlations were made in Leary & Petchey, but probably some fancier model might be better (maybe even nonlinear fits...). I included the result of the correlation as a footnote in each figure, labelled "Cor = X" where X is the Pearson Correlation coefficient. 
@@ -1176,26 +1176,47 @@ mods <- comm_data_long %>%
   select(-data) %>%
   unnest(cols="models")
 
+mods$resp_div_name[mods$resp_div_name %in% 'cor_respdiv']<-"Correlation"
+mods$resp_div_name[mods$resp_div_name %in% 'deriv_nss_respdiv']<-"(Dis)similarity"
+mods$resp_div_name[mods$resp_div_name %in% 'deriv_ss_respdiv']<-"Divergence"
+mods$resp_div_name <- mods$resp_div_name %>% as.character() %>% parse_factor(levels = c("Correlation","(Dis)similarity","Divergence"))
+mods$trait_name <- mods$trait_name %>% as.character() %>% parse_factor(levels = c("intrinsic growth rate","carrying capacity"))
+
 study_oi <- "Leary and Petchey 2009"
 coef_plot <- mods %>%
   filter(study_name == study_oi,
          term == "resp_div_value_scaled",
          community_variable_name == "cv") %>%
   ggplot(aes(x = resp_div_name, y = estimate)) +
+  theme_classic(base_size = 14) +
+  geom_hline(yintercept = 0,lty = 2) + 
   geom_point() +
-  geom_pointrange(aes(ymin = conf.low, ymax = conf.high))+
+  geom_pointrange(aes(ymin = conf.low, ymax = conf.high),fatten = 5)+
   labs(title = paste0(study_oi)) +
   xlab("Measure of response diversity") +
-  ylab("Slope of relationship between\ncommunity stability (CV)\nand response diversity.") +
-  facet_grid(cols = vars(trait_name),
-             rows = vars(study_name))
+  ylab("Relationship with community stability \n(model slope)") +
+  facet_grid(cols = vars(trait_name))
 coef_plot
+
+# same for COV
+coef_plot2 <- mods %>%
+  filter(study_name == study_oi,
+         term == "resp_div_value_scaled",
+         community_variable_name == "cov") %>%
+  ggplot(aes(x = resp_div_name, y = estimate)) +
+  theme_classic(base_size = 14) +
+  geom_hline(yintercept = 0,lty = 2) + 
+  geom_point() +
+  geom_pointrange(aes(ymin = conf.low, ymax = conf.high),fatten = 5)+
+  labs(title = paste0(study_oi)) +
+  xlab("Measure of response diversity") +
+  ylab("Relationship with community stability \n(model slope)") +
+  facet_grid(cols = vars(trait_name))
+coef_plot2
 
 ```
 
 The model (linear regression) is rather crude (a more sophisticated could account for some of the dependencies among observations). Nevertheless, the point is to show that this approach can be used to assess the performance of different measures of response diversity, and different traits used as the basis of the measure. In this example, response diversity calculated with the intrinsic growth rate trait and as the sign sensitive amount of variation in the derivative has the strongest relationship with community stability, and is the only relationship with confidence interval not overlapping zero.
-
-
 
 
 # Results of the systematic review
