@@ -302,7 +302,7 @@ Now we have all the data required to produce the figures from the manuscript. Fi
 ymax<-max(y1a,y2a,y3a,y1b,y2b,y3b,y1c,y2c,y3c);ymin<-min(y1a,y2a,y3a,y1b,y2b,y3b,y1c,y2c,y3c)
 dmax<-max(d1a$derivative,d2a$derivative,d3a$derivative,d1b$derivative,d2b$derivative,d3b$derivative,d1c$derivative,d2c$derivative,d3c$derivative)
 dmin<-min(d1a$derivative,d2a$derivative,d3a$derivative,d1b$derivative,d2b$derivative,d3b$derivative,d1c$derivative,d2c$derivative,d3c$derivative)
-rmax<-max(rdiv_a$rdiv,rdiv_b$rdiv,rdiv_c$rdiv);rmin<-0
+rmax<-max(rdiv_a$rdiv,rdiv_b$rdiv,rdiv_c$rdiv);rmin<-1
 smax<-1;smin<-0
 
 # panel a
@@ -450,7 +450,7 @@ Next, we'll produce *Figure 3* to look at _nonlinear_ performance-environment re
 ymax<-max(y1d,y2d,y3d,y1e,y2e,y3e,y1f,y2f,y3f);ymin<-min(y1d,y2d,y3d,y1e,y2e,y3e,y1f,y2f,y3f)
 dmax<-max(d1d$derivative,d2d$derivative,d3d$derivative,d1e$derivative,d2e$derivative,d3e$derivative,d1f$derivative,d2f$derivative,d3f$derivative)
 dmin<-min(d1d$derivative,d2d$derivative,d3d$derivative,d1e$derivative,d2e$derivative,d3e$derivative,d1f$derivative,d2f$derivative,d3f$derivative)
-rmax<-max(rdiv_d$rdiv,rdiv_e$rdiv,rdiv_f$rdiv);rmin<-0
+rmax<-max(rdiv_d$rdiv,rdiv_e$rdiv,rdiv_f$rdiv);rmin<-1
 smax<-1;smin<-0
 
 # panel a
@@ -576,7 +576,7 @@ Fig_3ia<-ggplot(data = rdiv_f,mapping = aes(x = data,y = rdiv)) +
   geom_hline(yintercept = rdiv_f$Med,lty=2) +
   geom_line() + 
   geom_richtext(mapping = aes(x = 0.85,
-                              y = rdiv_f$Med-1.25),
+                              y = 1.25),
                 size=4.5,
                 label.color = NA,
                 label = paste("RDiv^Med =",paste0(round(rdiv_f$Med,digits = 2)))) +
