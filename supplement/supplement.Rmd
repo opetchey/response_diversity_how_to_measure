@@ -899,6 +899,15 @@ Fig_4fb<-Fig_4fb + theme(panel.grid.major = element_blank(), panel.grid.minor = 
 
 ```
 
+Quick check to see if r and K are correlated: 
+
+```{r}
+cor(r_vals$x,K_vals$x,method = "spearman")
+```
+
+Low Spearman coefficient (0.13).
+
+
 ## Comparing response diversity measures
 
 Here we read in the data that was created in the benchmarking response diversity project.
