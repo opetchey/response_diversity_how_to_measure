@@ -592,6 +592,23 @@ Fig_3ib<-Fig_3ib + theme(panel.grid.major = element_blank(), panel.grid.minor = 
 
 ```
 
+Demonstrate the relationship between the dissimilarity and divergence metrics: 
+
+```{r}
+# linear
+cor(rdiv_a$rdiv,rdiv_a$sign); plot(rdiv_a$rdiv,rdiv_a$sign)
+cor(rdiv_b$rdiv,rdiv_b$sign); plot(rdiv_b$rdiv,rdiv_b$sign)
+cor(rdiv_c$rdiv,rdiv_c$sign); plot(rdiv_c$rdiv,rdiv_c$sign)
+
+# nonlinear
+cor(rdiv_d$rdiv,rdiv_d$sign); plot(rdiv_d$rdiv,rdiv_d$sign)
+cor(rdiv_e$rdiv,rdiv_e$sign); plot(rdiv_e$rdiv,rdiv_e$sign)
+cor(rdiv_f$rdiv,rdiv_f$sign); plot(rdiv_f$rdiv,rdiv_f$sign)
+```
+
+Note that  in the linear cases, response diversity metrics are only weakly correlated, whereas for nonlinear examples, the relationship between the two metrics is stronger (particularly as average divergence increases).
+
+
 # Leary & Petchey (2009) reanalysis
 
 This section reanalyses the data from Leary & Petchey (2009, _Journal of Animal Ecology_) using the framework we present above.
