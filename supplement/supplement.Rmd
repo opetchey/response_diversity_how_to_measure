@@ -1244,6 +1244,61 @@ coef_plot2
 
 The model (linear regression) is rather crude (a more sophisticated could account for some of the dependencies among observations). Nevertheless, the point is to show that this approach can be used to assess the performance of different measures of response diversity, and different traits used as the basis of the measure. In this example, response diversity calculated with the intrinsic growth rate trait and as the sign sensitive amount of variation in the derivative has the strongest relationship with community stability, and is the only relationship with confidence interval not overlapping zero.
 
+And now with the correlation
+
+```{r}
+
+study_oi <- "Leary and Petchey 2009"
+
+mods <- comm_data_long %>%
+  nest_by(study_name, trait_name, environment_name,
+          resp_div_name, community_variable_name) %>%
+  mutate(models = list(broom::glance(lm(community_variable_value ~ resp_div_value_scaled,
+                              data = data)))) %>%
+  select(-data) %>%
+  unnest(cols="models")
+
+mods$resp_div_name[mods$resp_div_name %in% 'cor_respdiv']<-"Correlation"
+mods$resp_div_name[mods$resp_div_name %in% 'deriv_nss_respdiv']<-"(Dis)similarity"
+mods$resp_div_name[mods$resp_div_name %in% 'deriv_ss_respdiv']<-"Divergence"
+mods$resp_div_name <- mods$resp_div_name %>% as.character() %>% parse_factor(levels = c("Correlation","(Dis)similarity","Divergence"))
+mods$trait_name <- mods$trait_name %>% as.character() %>% parse_factor(levels = c("intrinsic growth rate","carrying capacity"))
+
+
+coef_plot <- mods %>%
+  filter(study_name == study_oi,
+         #term == "resp_div_value_scaled",
+         community_variable_name == "cv") %>%
+  ggplot(aes(x = resp_div_name, y = r.squared)) +
+  theme_classic(base_size = 14) +
+  geom_hline(yintercept = 0,lty = 2) + 
+  geom_point() +
+  #geom_pointrange(aes(ymin = conf.low, ymax = conf.high),fatten = 5)+
+  labs(title = paste0(study_oi)) +
+  xlab("Measure of response diversity") +
+  ylab("Relationship with community stability \n(r-squared)") +
+  facet_grid(cols = vars(trait_name))
+coef_plot
+
+# same for COV
+coef_plot2 <- mods %>%
+  filter(study_name == study_oi,
+         #term == "resp_div_value_scaled",
+         community_variable_name == "cov") %>%
+  ggplot(aes(x = resp_div_name, y = r.squared)) +
+  theme_classic(base_size = 14) +
+  geom_hline(yintercept = 0,lty = 2) + 
+  geom_point() +
+  #geom_pointrange(aes(ymin = conf.low, ymax = conf.high),fatten = 5)+
+  labs(title = paste0(study_oi)) +
+  xlab("Measure of response diversity") +
+  ylab("Relationship with community stability \n(r-squared)") +
+  facet_grid(cols = vars(trait_name))
+coef_plot2
+
+```
+
+
 
 # Results of the systematic review
 
