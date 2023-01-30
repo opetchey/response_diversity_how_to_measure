@@ -1244,7 +1244,7 @@ coef_plot2
 
 The model (linear regression) is rather crude (a more sophisticated could account for some of the dependencies among observations). Nevertheless, the point is to show that this approach can be used to assess the performance of different measures of response diversity, and different traits used as the basis of the measure. In this example, response diversity calculated with the intrinsic growth rate trait and as the sign sensitive amount of variation in the derivative has the strongest relationship with community stability, and is the only relationship with confidence interval not overlapping zero.
 
-And now with the correlation
+And now we look at these same correlations by assessing goodness-of-fit (R-squared):
 
 ```{r}
 
@@ -1264,7 +1264,6 @@ mods$resp_div_name[mods$resp_div_name %in% 'deriv_ss_respdiv']<-"Divergence"
 mods$resp_div_name <- mods$resp_div_name %>% as.character() %>% parse_factor(levels = c("Correlation","(Dis)similarity","Divergence"))
 mods$trait_name <- mods$trait_name %>% as.character() %>% parse_factor(levels = c("intrinsic growth rate","carrying capacity"))
 
-
 coef_plot <- mods %>%
   filter(study_name == study_oi,
          #term == "resp_div_value_scaled",
@@ -1272,8 +1271,7 @@ coef_plot <- mods %>%
   ggplot(aes(x = resp_div_name, y = r.squared)) +
   theme_classic(base_size = 14) +
   geom_hline(yintercept = 0,lty = 2) + 
-  geom_point() +
-  #geom_pointrange(aes(ymin = conf.low, ymax = conf.high),fatten = 5)+
+  geom_point(size = 3) +
   labs(title = paste0(study_oi)) +
   xlab("Measure of response diversity") +
   ylab("Relationship with community stability \n(r-squared)") +
@@ -1288,14 +1286,12 @@ coef_plot2 <- mods %>%
   ggplot(aes(x = resp_div_name, y = r.squared)) +
   theme_classic(base_size = 14) +
   geom_hline(yintercept = 0,lty = 2) + 
-  geom_point() +
-  #geom_pointrange(aes(ymin = conf.low, ymax = conf.high),fatten = 5)+
+  geom_point(size = 3) +
   labs(title = paste0(study_oi)) +
   xlab("Measure of response diversity") +
   ylab("Relationship with community stability \n(r-squared)") +
   facet_grid(cols = vars(trait_name))
 coef_plot2
-
 ```
 
 
