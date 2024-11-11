@@ -74,8 +74,12 @@ We now demonstrate the properties of these indices under a range of conditions.
 summary_stats <- dd %>%
   group_by(num_spp, max_minus_min, mean) %>%
   summarise(dissimilarity = resp_div(rd_vals,sign_sens = FALSE),
-            divergence = resp_div(rd_vals,sign_sens = TRUE)) %>%
-  pivot_longer(names_to = "variable", values_to = "value", 4:5)
+            divergence = resp_div(rd_vals,sign_sens = TRUE),
+            magnitude = sum(abs(rd_vals)),
+            balance = abs(sum(rd_vals))) %>%
+  pivot_longer(names_to = "variable", values_to = "value", 4:5) |> 
+  mutate(range_mean = ifelse(abs(mean) >= (max_minus_min/2),
+                             "mean >= range/2", "mean < range/2"))
 
 ## wrangle the data for easier plotting
 all_data <- dd %>%
@@ -85,6 +89,21 @@ all_data <- dd %>%
   bind_rows(summary_stats) %>%
   mutate(variable = as_factor(variable))
 ```
+
+
+
+```{r}
+## plot magnitude against balance for 8 species using the summary_stats
+summary_stats %>%
+  ggplot(aes(x = balance, y = magnitude, col = range_mean)) +
+  geom_point() +
+  facet_wrap(~num_spp, scales = "free") +
+  theme_minimal()
+
+```
+
+
+
 
 ## Communities varying only in spread
 
