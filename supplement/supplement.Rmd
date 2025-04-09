@@ -277,37 +277,37 @@ Then we'll measure response diversity using the approach above.
 ```{r}
 
 # calculate response diversity for model a
-rdiv_a<-data.frame('data' = d1a$data, 'sp.1' = d1a$derivative, 'sp.2' = d2a$derivative, 'sp.3' = d3a$derivative)
+rdiv_a<-data.frame('data' = d1a$x, 'sp.1' = d1a$.derivative, 'sp.2' = d2a$.derivative, 'sp.3' = d3a$.derivative)
 rdiv_a$rdiv<-apply(rdiv_a[,c(2:4)], 1, resp_div, sign_sens = F)
 rdiv_a$sign<-apply(rdiv_a[,c(2:4)], 1, resp_div, sign_sens = T)
 rdiv_a$Med<-median(rdiv_a$rdiv)
 
 # calculate response diversity for model b
-rdiv_b<-data.frame('data' = d1b$data, 'sp.1' = d1b$derivative, 'sp.2' = d2b$derivative, 'sp.3' = d3b$derivative)
+rdiv_b<-data.frame('data' = d1b$x, 'sp.1' = d1b$.derivative, 'sp.2' = d2b$.derivative, 'sp.3' = d3b$.derivative)
 rdiv_b$rdiv<-apply(rdiv_b[,c(2:4)], 1, resp_div, sign_sens = F)
 rdiv_b$sign<-apply(rdiv_b[,c(2:4)], 1, resp_div, sign_sens = T)
 rdiv_b$Med<-median(rdiv_b$rdiv)
 
 # calculate response diversity for model c
-rdiv_c<-data.frame('data' = d1c$data, 'sp.1' = d1c$derivative, 'sp.2' = d2c$derivative, 'sp.3' = d3c$derivative)
+rdiv_c<-data.frame('data' = d1c$x, 'sp.1' = d1c$.derivative, 'sp.2' = d2c$.derivative, 'sp.3' = d3c$.derivative)
 rdiv_c$rdiv<-apply(rdiv_c[,c(2:4)], 1, resp_div, sign_sens = F)
 rdiv_c$sign<-apply(rdiv_c[,c(2:4)], 1, resp_div, sign_sens = T)
 rdiv_c$Med<-median(rdiv_c$rdiv)
 
 # calculate response diversity for model d
-rdiv_d<-data.frame('data' = d1d$data, 'sp.1' = d1d$derivative, 'sp.2' = d2d$derivative, 'sp.3' = d3d$derivative)
+rdiv_d<-data.frame('data' = d1d$x, 'sp.1' = d1d$.derivative, 'sp.2' = d2d$.derivative, 'sp.3' = d3d$.derivative)
 rdiv_d$rdiv<-apply(rdiv_d[,c(2:4)], 1, resp_div, sign_sens = F)
 rdiv_d$sign<-apply(rdiv_d[,c(2:4)], 1, resp_div, sign_sens = T)
 rdiv_d$Med<-median(rdiv_d$rdiv)
 
 # calculate response diversity for model e
-rdiv_e<-data.frame('data' = d1e$data, 'sp.1' = d1e$derivative, 'sp.2' = d2e$derivative, 'sp.3' = d3e$derivative)
+rdiv_e<-data.frame('data' = d1e$x, 'sp.1' = d1e$.derivative, 'sp.2' = d2e$.derivative, 'sp.3' = d3e$.derivative)
 rdiv_e$rdiv<-apply(rdiv_e[,c(2:4)], 1, resp_div, sign_sens = F)
 rdiv_e$sign<-apply(rdiv_e[,c(2:4)], 1, resp_div, sign_sens = T)
 rdiv_e$Med<-median(rdiv_e$rdiv)
 
 # calculate response diversity for model f
-rdiv_f<-data.frame('data' = d1f$data, 'sp.1' = d1f$derivative, 'sp.2' = d2f$derivative, 'sp.3' = d3f$derivative)
+rdiv_f<-data.frame('data' = d1f$x, 'sp.1' = d1f$.derivative, 'sp.2' = d2f$.derivative, 'sp.3' = d3f$.derivative)
 rdiv_f$rdiv<-apply(rdiv_f[,c(2:4)], 1, resp_div, sign_sens = F)
 rdiv_f$sign<-apply(rdiv_f[,c(2:4)], 1, resp_div, sign_sens = T)
 rdiv_f$Med<-median(rdiv_f$rdiv)
@@ -319,8 +319,8 @@ Now we have all the data required to produce the figures from the manuscript. Fi
 ```{r}
 # Y value range
 ymax<-max(y1a,y2a,y3a,y1b,y2b,y3b,y1c,y2c,y3c);ymin<-min(y1a,y2a,y3a,y1b,y2b,y3b,y1c,y2c,y3c)
-dmax<-max(d1a$derivative,d2a$derivative,d3a$derivative,d1b$derivative,d2b$derivative,d3b$derivative,d1c$derivative,d2c$derivative,d3c$derivative)
-dmin<-min(d1a$derivative,d2a$derivative,d3a$derivative,d1b$derivative,d2b$derivative,d3b$derivative,d1c$derivative,d2c$derivative,d3c$derivative)
+dmax<-max(d1a$.derivative,d2a$.derivative,d3a$.derivative,d1b$.derivative,d2b$.derivative,d3b$.derivative,d1c$.derivative,d2c$.derivative,d3c$.derivative)
+dmin<-min(d1a$.derivative,d2a$.derivative,d3a$.derivative,d1b$.derivative,d2b$.derivative,d3b$.derivative,d1c$.derivative,d2c$.derivative,d3c$.derivative)
 rmax<-max(rdiv_a$rdiv,rdiv_b$rdiv,rdiv_c$rdiv);rmin<-1
 smax<-1;smin<-0
 
@@ -364,41 +364,41 @@ Fig_2c<-ggplot(data = NULL,mapping = aes(x = x,y = y1c)) +
   lims(y = c(ymin,ymax))
 
 # panel d
-Fig_2d<-ggplot(data = NULL,mapping = aes(x = d1a$data,y = d1a$derivative)) +
+Fig_2d<-ggplot(data = NULL,mapping = aes(x = d1a$x,y = d1a$.derivative)) +
   theme_classic(base_size = 14) + 
   labs(x = "Spring frost",y = "Derivative (chlorophyll product.)",tag = "d)") + 
   geom_hline(yintercept = 0,
              lty=2) +
   geom_line(col = Isfahan1[[1]][2]) + 
-  geom_line(aes(y = d2a$derivative),
+  geom_line(aes(y = d2a$.derivative),
             col = Isfahan1[[1]][4]) + 
-  geom_line(aes(y = d3a$derivative),
+  geom_line(aes(y = d3a$.derivative),
             col = Isfahan1[[1]][6]) + 
   lims(y = c(dmin,dmax))
 
 # panel e
-Fig_2e<-ggplot(data = NULL,mapping = aes(x = d1b$data,y = d1b$derivative)) +
+Fig_2e<-ggplot(data = NULL,mapping = aes(x = d1b$x,y = d1b$.derivative)) +
   theme_classic(base_size = 14) + 
   labs(x = "Urbanisation",y = "Derivative (macroinvert. abundance)",tag = "e)") + 
   geom_hline(yintercept = 0,
              lty=2) +
   geom_line(col = Isfahan1[[1]][2]) + 
-  geom_line(aes(y = d2b$derivative),
+  geom_line(aes(y = d2b$.derivative),
             col = Isfahan1[[1]][4]) + 
-  geom_line(aes(y = d3b$derivative),
+  geom_line(aes(y = d3b$.derivative),
             col = Isfahan1[[1]][6]) + 
   lims(y = c(dmin,dmax))
 
 # panel f
-Fig_2f<-ggplot(data = NULL,mapping = aes(x = d1c$data,y = d1c$derivative)) +
+Fig_2f<-ggplot(data = NULL,mapping = aes(x = d1c$x,y = d1c$.derivative)) +
   theme_classic(base_size = 14) + 
   labs(x = "Winter temperature",y = "Derivative (bee mass loss)",tag = "f)") + 
   geom_hline(yintercept = 0,
              lty=2) +
   geom_line(col = Isfahan1[[1]][2]) + 
-  geom_line(aes(y = d2c$derivative),
+  geom_line(aes(y = d2c$.derivative),
             col = Isfahan1[[1]][4]) + 
-  geom_line(aes(y = d3c$derivative),
+  geom_line(aes(y = d3c$.derivative),
             col = Isfahan1[[1]][6]) + 
   lims(y = c(dmin,dmax))
 
@@ -467,8 +467,8 @@ Next, we'll produce *Figure 3* to look at *nonlinear* performance-environment re
 ```{r}
 # Y value range
 ymax<-max(y1d,y2d,y3d,y1e,y2e,y3e,y1f,y2f,y3f);ymin<-min(y1d,y2d,y3d,y1e,y2e,y3e,y1f,y2f,y3f)
-dmax<-max(d1d$derivative,d2d$derivative,d3d$derivative,d1e$derivative,d2e$derivative,d3e$derivative,d1f$derivative,d2f$derivative,d3f$derivative)
-dmin<-min(d1d$derivative,d2d$derivative,d3d$derivative,d1e$derivative,d2e$derivative,d3e$derivative,d1f$derivative,d2f$derivative,d3f$derivative)
+dmax<-max(d1d$.derivative,d2d$.derivative,d3d$.derivative,d1e$.derivative,d2e$.derivative,d3e$.derivative,d1f$.derivative,d2f$.derivative,d3f$.derivative)
+dmin<-min(d1d$.derivative,d2d$.derivative,d3d$.derivative,d1e$.derivative,d2e$.derivative,d3e$.derivative,d1f$.derivative,d2f$.derivative,d3f$.derivative)
 rmax<-max(rdiv_d$rdiv,rdiv_e$rdiv,rdiv_f$rdiv);rmin<-1
 smax<-1;smin<-0
 
@@ -512,41 +512,41 @@ Fig_3c<-ggplot(data = NULL,mapping = aes(x = x,y = y1f)) +
   lims(y = c(ymin,ymax))
 
 # panel d
-Fig_3d<-ggplot(data = NULL,mapping = aes(x = d1d$data,y = d1d$derivative)) +
+Fig_3d<-ggplot(data = NULL,mapping = aes(x = d1d$x,y = d1d$.derivative)) +
   theme_classic(base_size = 14) + 
   labs(x = "Flowering plant abundance",y = "Derivative (rate of increase)",tag = "d)") + 
   geom_hline(yintercept = 0,
              lty=2) +
   geom_line(col = Isfahan1[[1]][2]) + 
-  geom_line(aes(y = d2d$derivative),
+  geom_line(aes(y = d2d$.derivative),
             col = Isfahan1[[1]][4]) + 
-  geom_line(aes(y = d3d$derivative),
+  geom_line(aes(y = d3d$.derivative),
             col = Isfahan1[[1]][6]) + 
   lims(y = c(dmin,dmax))
 
 # panel e
-Fig_3e<-ggplot(data = NULL,mapping = aes(x = d1e$data,y = d1e$derivative)) +
+Fig_3e<-ggplot(data = NULL,mapping = aes(x = d1e$x,y = d1e$.derivative)) +
   theme_classic(base_size = 14) + 
   labs(x = "Grazing pressure",y = "Derivative (seedling establish.)",tag = "e)") + 
   geom_hline(yintercept = 0,
              lty=2) +
   geom_line(col = Isfahan1[[1]][2]) + 
-  geom_line(aes(y = d2e$derivative),
+  geom_line(aes(y = d2e$.derivative),
             col = Isfahan1[[1]][4]) + 
-  geom_line(aes(y = d3e$derivative),
+  geom_line(aes(y = d3e$.derivative),
             col = Isfahan1[[1]][6]) + 
   lims(y = c(dmin,dmax))
 
 # panel f
-Fig_3f<-ggplot(data = NULL,mapping = aes(x = d1f$data,y = d1f$derivative)) +
+Fig_3f<-ggplot(data = NULL,mapping = aes(x = d1f$x,y = d1f$.derivative)) +
   theme_classic(base_size = 14) + 
   labs(x = "Fire frequency",y = "Derivative (tree density)",tag = "f)") + 
   geom_hline(yintercept = 0,
              lty=2) +
   geom_line(col = Isfahan1[[1]][2]) + 
-  geom_line(aes(y = d2f$derivative),
+  geom_line(aes(y = d2f$.derivative),
             col = Isfahan1[[1]][4]) + 
-  geom_line(aes(y = d3f$derivative),
+  geom_line(aes(y = d3f$.derivative),
             col = Isfahan1[[1]][6]) + 
   lims(y = c(dmin,dmax))
 
@@ -611,10 +611,9 @@ Fig_3ib<-Fig_3ib + theme(panel.grid.major = element_blank(), panel.grid.minor = 
 
 ```
 
-
-```{r eval = FALSE}
 Demonstrate the relationship between the dissimilarity and divergence metrics:
 
+```{r eval = FALSE}
 # linear
 cor(rdiv_a$rdiv,rdiv_a$sign); plot(rdiv_a$rdiv,rdiv_a$sign)
 cor(rdiv_b$rdiv,rdiv_b$sign); plot(rdiv_b$rdiv,rdiv_b$sign)
@@ -698,32 +697,29 @@ d3_K<-derivatives(m3_K, newdata = new_data)
 d4_K<-derivatives(m4_K, newdata = new_data)
 
 # calculate response diversity for intrinsic rate of increase (r)
-rdiv_r<-data.frame('temperature' = d1_r$data,
-                   'tetrahymena' = d1_r$derivative,
-                   'loxocephallus' = d2_r$derivative,
-                   'colpidium' = d3_r$derivative, 'paramecium' = d4_r$derivative)
+rdiv_r<-data.frame('temperature' = d1_r$temperature,
+                   'tetrahymena' = d1_r$.derivative,
+                   'loxocephallus' = d2_r$.derivative,
+                   'colpidium' = d3_r$.derivative, 'paramecium' = d4_r$.derivative)
 rdiv_r$rdiv<-apply(rdiv_r[,c(2:5)], 1, resp_div, sign_sens = F)
 rdiv_r$sign<-apply(rdiv_r[,c(2:5)], 1, resp_div, sign_sens = T)
 rdiv_r$Med<-median(rdiv_r$rdiv)
 
 # calculate response diversity for carrying capacity (K)
-rdiv_K<-data.frame('temperature' = d1_K$data,
-                   'tetrahymena' = d1_K$derivative,
-                   'loxocephallus' = d2_K$derivative,
-                   'colpidium' = d3_K$derivative,
-                   'paramecium' = d4_K$derivative)
+rdiv_K<-data.frame('temperature' = d1_K$temperature,
+                   'tetrahymena' = d1_K$.derivative,
+                   'loxocephallus' = d2_K$.derivative,
+                   'colpidium' = d3_K$.derivative,
+                   'paramecium' = d4_K$.derivative)
 rdiv_K$rdiv<-apply(rdiv_K[,c(2:5)], 1, resp_div, sign_sens = F)
 rdiv_K$sign<-apply(rdiv_K[,c(2:5)], 1, resp_div, sign_sens = T)
 rdiv_K$Med<-median(rdiv_K$rdiv)
 
 ```
 
+To plot the output of the gams, we'll use the predict function. This needs a new tibble with the output of predict:
 
 ```{r}
-
-# To plot the output of the gams, we'll use the predict function. This needs a new tibble with the output of predict:
-
-
 # generate new tibble with data from predict() for plotting gams ## r
 gam_data_r <- tibble(temperature = seq(from=min(sp1_r$temperature),to=max(sp1_r$temperature),length.out = 1000)
 ) %>% 
@@ -866,31 +862,31 @@ Fig_4b<-gam_data_K %>%
   geom_line(aes(y = Sp4), col = Isfahan1[[1]][2])
 
 # panel c
-Fig_4c<-ggplot(data = d1_r,mapping = aes(x = data,y = derivative)) +
+Fig_4c<-ggplot(data = d1_r,mapping = aes(x = temperature,y = .derivative)) +
   theme_classic(base_size = 14) + 
   labs(x = "Temperature",y = "Derivative (rate of increase)",tag = "c)") + 
   geom_hline(yintercept = 0,
              lty=2) +
   geom_line(col = Isfahan1[[1]][5]) + 
-  geom_line(aes(y = d2_r$derivative),
+  geom_line(aes(y = d2_r$.derivative),
             col = Isfahan1[[1]][4]) + 
-  geom_line(aes(y = d3_r$derivative),
+  geom_line(aes(y = d3_r$.derivative),
             col = Isfahan1[[1]][3]) + 
-  geom_line(aes(y = d4_r$derivative),
+  geom_line(aes(y = d4_r$.derivative),
             col = Isfahan1[[1]][2])
 
 # panel d
-Fig_4d<-ggplot(data = d1_K,mapping = aes(x = data,y = derivative)) +
+Fig_4d<-ggplot(data = d1_K,mapping = aes(x = temperature,y = .derivative)) +
   theme_classic(base_size = 14) + 
   labs(x = "Temperature",y = "Derivative (carrying capacity)",tag = "d)") + 
   geom_hline(yintercept = 0,
              lty=2) +
   geom_line(col = Isfahan1[[1]][5]) + 
-  geom_line(aes(y = d2_K$derivative),
+  geom_line(aes(y = d2_K$.derivative),
             col = Isfahan1[[1]][4]) + 
-  geom_line(aes(y = d3_K$derivative),
+  geom_line(aes(y = d3_K$.derivative),
             col = Isfahan1[[1]][3]) + 
-  geom_line(aes(y = d4_K$derivative),
+  geom_line(aes(y = d4_K$.derivative),
             col = Isfahan1[[1]][2])
 
 # panel e
